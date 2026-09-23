@@ -17,18 +17,11 @@ export class Player extends Phaser.Physics.Arcade.Sprite {
     // Geen setScale(), dus Job behoudt exact zijn originele grootte!
   }
 
-  public move(dx: number, dy: number, screenWidth: number): void {
+  public move(dx: number, dy: number, _screenWidth: number): void {
     const newX = this.x + dx;
     const newY = this.y + dy;
 
-    // Houd Job alleen binnen de linker- en rechterkant van het scherm
-    if (
-      newX < this.gridTileSize / 2 ||
-      newX > screenWidth - this.gridTileSize / 2
-    ) {
-      return;
-    }
-
+    // De limiet aan de zijkanten is volledig verwijderd!
     this.setPosition(newX, newY);
   }
 

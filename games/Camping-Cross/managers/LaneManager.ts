@@ -23,7 +23,7 @@ export class LaneManager {
   public nextLaneY: number = 600;
   private gridTileSize: number;
 
-  private worldWidth: number = 1200; // Vaste brede wereld (24 kolommen van 50px)
+  public worldWidth: number = 1500; // Vaste brede wereld (30 kolommen van 50px)
   private sideBuffer: number = 300;
 
   constructor(scene: Phaser.Scene, gridTileSize: number) {
@@ -68,6 +68,23 @@ export class LaneManager {
       tile.setOrigin(0.5);
     }
 
+    // PLAATS VASTE GRENS-BOOMEN AAN DE UITEINDEN (BEHALVE BIJ WATER)
+    if (type !== "water") {
+      const leftBorderX = this.gridTileSize / 2; // Eerste vakje links
+      const rightBorderX = this.worldWidth - this.gridTileSize / 2; // Laatste vakje rechts
+
+      const leftTree = new Tree(this.scene, leftBorderX, y, this.gridTileSize);
+      const rightTree = new Tree(
+        this.scene,
+        rightBorderX,
+        y,
+        this.gridTileSize,
+      );
+
+      this.trees.add(leftTree);
+      this.trees.add(rightTree);
+    }
+
     this.lanes.push({ y, type });
   }
 
@@ -88,11 +105,10 @@ export class LaneManager {
       0,
       (this.scene.scale.height - this.nextLaneY) / 50,
     );
-    const speedBoost = Math.min(160, distanceTraveled * 3.5);
-
+    const speedBoost = Math.min(80, distanceTraveled * 1.5);
     if (laneType === "road") {
       const direction = Math.random() > 0.5 ? 1 : -1;
-      const baseSpeed = Phaser.Math.Between(70, 110);
+      const baseSpeed = Phaser.Math.Between(40, 70);
       const speed = baseSpeed + speedBoost;
       const obstacleType: ObstacleType =
         Math.random() > 0.5 ? "skelter" : "dog";
@@ -101,7 +117,7 @@ export class LaneManager {
       this.lanes[laneIndex].speed = speed;
       this.lanes[laneIndex].obstacleType = obstacleType;
 
-      const initialX = Phaser.Math.Between(50, this.worldWidth - 50);
+      const initialX = Phaser.Math.Between(100, this.worldWidth - 100);
       this.spawnObstacleOnLane(this.lanes[laneIndex], initialX);
     } else if (laneType === "water") {
       const direction = Math.random() > 0.5 ? 1 : -1;
@@ -110,15 +126,15 @@ export class LaneManager {
       this.lanes[laneIndex].direction = direction;
       this.lanes[laneIndex].speed = speed;
 
-      const initialX1 = Phaser.Math.Between(50, this.worldWidth - 50);
+      const initialX1 = Phaser.Math.Between(100, this.worldWidth - 100);
       this.spawnLogOnLane(this.lanes[laneIndex], initialX1);
     } else {
       let occupiedCols = new Set<number>();
-      if (Math.random() < 0.5) {
+      if (Math.random() < 0.6) {
         occupiedCols = this.spawnTreesOnGrassLane(this.nextLaneY);
       }
 
-      if (Math.random() < 0.35) {
+      if (Math.random() < 0.4) {
         this.spawnFishOnLane(this.nextLaneY, occupiedCols);
       }
     }
@@ -137,19 +153,21 @@ export class LaneManager {
     const treeCount = Phaser.Math.Between(2, 5);
     const occupiedCols = new Set<number>();
 
+    // Blokkeer de uiterste kolommen zodat er geen random bomen overheen spawneren
+    occupiedCols.add(0);
+    occupiedCols.add(totalCols - 1);
+
     for (let i = 0; i < treeCount; i++) {
-      const col = Phaser.Math.Between(0, totalCols - 1);
+      const col = Phaser.Math.Between(1, totalCols - 2);
       occupiedCols.add(col);
     }
 
-    if (occupiedCols.size >= totalCols - 1) {
-      return new Set<number>();
-    }
-
     occupiedCols.forEach((col) => {
-      const x = col * this.gridTileSize + this.gridTileSize / 2;
-      const tree = new Tree(this.scene, x, y, this.gridTileSize);
-      this.trees.add(tree);
+      if (col > 0 && col < totalCols - 1) {
+        const x = col * this.gridTileSize + this.gridTileSize / 2;
+        const tree = new Tree(this.scene, x, y, this.gridTileSize);
+        this.trees.add(tree);
+      }
     });
 
     return occupiedCols;
@@ -162,7 +180,7 @@ export class LaneManager {
     const maxColumns = Math.floor(this.worldWidth / this.gridTileSize);
 
     const availableCols: number[] = [];
-    for (let col = 1; col < maxColumns - 1; col++) {
+    for (let col = 2; col < maxColumns - 2; col++) {
       if (!excludedCols.has(col)) {
         availableCols.push(col);
       }
@@ -203,17 +221,6 @@ export class LaneManager {
           ? -spawnMargin
           : this.worldWidth + spawnMargin;
 
-    const minDistanceBetweenObstacles = 200;
-    const hasObstacleTooClose = this.obstacles.getChildren().some((obj) => {
-      const obs = obj as Obstacle;
-      return (
-        Math.abs(obs.y - lane.y) < 10 &&
-        Math.abs(obs.x - startX) < minDistanceBetweenObstacles
-      );
-    });
-
-    if (hasObstacleTooClose && customX === undefined) return;
-
     const obstacle = new Obstacle(
       this.scene,
       startX,
@@ -242,25 +249,33 @@ export class LaneManager {
           ? -spawnMargin
           : this.worldWidth + spawnMargin;
 
-    const minDistanceBetweenLogs = 220;
-    const hasLogTooClose = this.logs.getChildren().some((obj) => {
-      const log = obj as Log;
-      return (
-        Math.abs(log.y - lane.y) < 10 &&
-        Math.abs(log.x - startX) < minDistanceBetweenLogs
-      );
-    });
-
-    if (hasLogTooClose && customX === undefined) return;
-
-    const log = new Log(this.scene, startX, lane.y, lane.direction, lane.speed);
+    // Geef this.worldWidth mee aan de Log constructor
+    const log = new Log(
+      this.scene,
+      startX,
+      lane.y,
+      lane.direction,
+      lane.speed,
+      200,
+      this.worldWidth,
+    );
     this.logs.add(log);
   }
 
   public cleanupOldObjects(): void {
     const cameraY = this.scene.cameras.main.scrollY;
-    const destroyMargin = 300;
+    const destroyMargin = 400;
 
+    // 1. Ruim oude lanes en hun tegels op die ver onder de camera liggen
+    this.lanes = this.lanes.filter((lane) => {
+      if (lane.y > cameraY + 900) {
+        // Als je een referentie naar de tile-afbeeldingen bijhoudt, kun je die hier destroyen.
+        return false; // Verwijder uit de array
+      }
+      return true;
+    });
+
+    // 2. Ruim obstakels op
     (this.obstacles.getChildren() as Obstacle[]).forEach((obstacle) => {
       if (
         obstacle &&
@@ -272,6 +287,7 @@ export class LaneManager {
       }
     });
 
+    // 3. Ruim boomstammen op
     (this.logs.getChildren() as Log[]).forEach((log) => {
       if (
         log &&
@@ -283,10 +299,12 @@ export class LaneManager {
       }
     });
 
+    // 4. Ruim visjes op
     (this.fishes.getChildren() as Fish[]).forEach((fish) => {
       if (fish && fish.y > cameraY + 900) fish.destroy();
     });
 
+    // 5. Ruim bomen op
     (this.trees.getChildren() as Tree[]).forEach((tree) => {
       if (tree && tree.y > cameraY + 900) tree.destroy();
     });

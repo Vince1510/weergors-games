@@ -46,13 +46,29 @@ export class JobTheCatScene extends Phaser.Scene {
     this.laneManager.init();
     this.uiManager.createUI();
 
+    // Start Job in het midden van de BREDE wereld
     const startX =
-      Math.floor(screenWidth / 2 / this.gridTileSize) * this.gridTileSize +
+      Math.floor(this.laneManager.worldWidth / 2 / this.gridTileSize) *
+        this.gridTileSize +
       this.gridTileSize / 2;
     const startY = screenHeight - 100;
     this.highestYReached = startY;
 
     this.player = new Player(this, startX, startY, this.gridTileSize);
+
+    // Stel de camerabounds in op de brede wereld
+    this.cameras.main.setBounds(
+      0,
+      -100000,
+      this.laneManager.worldWidth,
+      100000 + screenHeight,
+    );
+    this.cameras.main.startFollow(this.player, true, 0.1, 0.1, 0, 150);
+
+    // DIRECT CENTREREN OP JOB BIJ START
+    this.cameras.main.centerOn(startX, startY);
+
+    // Laat de camera Job verder volgen
     this.cameras.main.startFollow(this.player, true, 0.1, 0.1, 0, 150);
 
     this.inputManager.setupControls(
@@ -79,7 +95,7 @@ export class JobTheCatScene extends Phaser.Scene {
     );
 
     this.time.addEvent({
-      delay: 700,
+      delay: 1200,
       callback: () =>
         this.laneManager.spawnObstaclesForActiveLanes(this.isGameOver),
       callbackScope: this,
@@ -87,12 +103,11 @@ export class JobTheCatScene extends Phaser.Scene {
     });
   }
 
-  override update(time: number, delta: number): void {
+  override update(_time: number, delta: number): void {
     if (this.isGameOver) return;
 
     this.inputManager.updateKeyboard((dx, dy) => this.movePlayer(dx, dy));
 
-    // 1. LAAT ALLE BOOMSTAMMEN ZELFSTANDIG DRIJVEN
     this.laneManager.logs.getChildren().forEach((gameObject) => {
       const log = gameObject as Log;
       if (log && log.active) {
@@ -100,13 +115,13 @@ export class JobTheCatScene extends Phaser.Scene {
       }
     });
 
-    // 2. CONTROLEER WATER & SPOOL
     this.checkWaterAndLogs(delta);
 
     while (this.player.y - 500 < this.laneManager.nextLaneY) {
       this.laneManager.generateRandomLane();
     }
 
+    // Ruim oude objecten én lanes op die onder het scherm zijn verdwenen
     this.laneManager.cleanupOldObjects();
   }
 
@@ -117,7 +132,14 @@ export class JobTheCatScene extends Phaser.Scene {
 
     if (currentLane && currentLane.type === "water") {
       let currentLog: Log | null = null;
-      const playerBounds = this.player.getBounds();
+
+      // Maak de hitboxtjek voor de speler iets ruimer zodat je niet direct verdrinkt op het randje
+      const playerBounds = new Phaser.Geom.Rectangle(
+        this.player.x - 18,
+        this.player.y - 18,
+        36,
+        36,
+      );
 
       // Check of de speler op een van de bewegende stammen staat
       this.laneManager.logs.getChildren().forEach((gameObject) => {
@@ -138,8 +160,8 @@ export class JobTheCatScene extends Phaser.Scene {
           ((currentLog as Log).direction * (currentLog as Log).speed * delta) /
           1000;
 
-        // Uit het scherm gedreven = Game Over
-        if (this.player.x < 0 || this.player.x > this.scale.width) {
+        // Uit het brede wereld gedreven = Game Over
+        if (this.player.x < 0 || this.player.x > this.laneManager.worldWidth) {
           this.hitObstacle();
         }
       } else {

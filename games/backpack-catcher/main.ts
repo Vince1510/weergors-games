@@ -13,7 +13,7 @@ const config = {
   physics: {
     default: "arcade",
     arcade: {
-      debug: false, // <-- Zet op TRUE om paars/groene omdelingslijnen te zien!
+      debug: false,
     },
   },
   scene: [GameScene],
