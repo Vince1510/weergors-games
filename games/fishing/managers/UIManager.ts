@@ -92,7 +92,6 @@ export class UIManager {
     this.createShopModal(shopManager, onShopStateChange);
   }
 
-  // Voorkomt sub-pixel trilling door coördinaten strak af te ronden op hele pixels
   public update(): void {
     if (this.fishCountText && this.depthText) {
       this.fishCountText.x = Math.round(20);
@@ -114,11 +113,11 @@ export class UIManager {
       .setOrigin(0);
 
     const panel = this.scene.add
-      .rectangle(sw / 2, sh / 2, sw * 0.88, sh * 0.82, 0x112233)
+      .rectangle(sw / 2, sh / 2, sw * 0.88, sh * 0.86, 0x112233)
       .setStrokeStyle(4, 0x33aaff);
 
     const title = this.scene.add
-      .text(sw / 2, sh / 2 - sh * 0.35, "VISMARKT & WINKEL", {
+      .text(sw / 2, sh / 2 - sh * 0.37, "VISMARKT & WINKEL", {
         fontSize: "22px",
         color: "#ffd700",
         fontStyle: "bold",
@@ -146,7 +145,7 @@ export class UIManager {
       .setOrigin(0.5);
 
     this.closeBtnContainer = this.scene.add
-      .container(sw / 2 + sw * 0.39, sh / 2 - sh * 0.35, [
+      .container(sw / 2 + sw * 0.39, sh / 2 - sh * 0.37, [
         closeBtnBg,
         closeBtnTxt,
       ])
@@ -201,7 +200,7 @@ export class UIManager {
     const coinsHeader = this.scene.add
       .text(
         sw / 2,
-        sh / 2 - sh * 0.26,
+        sh / 2 - sh * 0.28,
         `Beschikbare Munten: €${shopManager.coins}`,
         {
           fontSize: "18px",
@@ -215,7 +214,7 @@ export class UIManager {
     const invText = this.scene.add
       .text(
         sw / 2,
-        sh / 2 - sh * 0.2,
+        sh / 2 - sh * 0.22,
         `Emmer: ${fishCount} vissen  |  Waarde: €${totalVal}`,
         {
           fontSize: "14px",
@@ -227,9 +226,9 @@ export class UIManager {
 
     const sellBtnContainer = this.createButton(
       sw / 2,
-      sh / 2 - sh * 0.11,
+      sh / 2 - sh * 0.14,
       280,
-      38,
+      36,
       "Alles Verkopen 💰",
       totalVal > 0 ? 0x22aa44 : 0x555555,
       totalVal > 0,
@@ -242,6 +241,7 @@ export class UIManager {
     );
     sellBtnContainer.setData("dynamic", true);
 
+    // 1. Vislijn Lengte Upgrade
     const lineCost = shopManager.getLineUpgradeCost();
     const lineLabel =
       lineCost > 0
@@ -250,9 +250,9 @@ export class UIManager {
 
     const lineBtnContainer = this.createButton(
       sw / 2,
-      sh / 2 + sh * 0.01,
+      sh / 2 - sh * 0.04,
       320,
-      38,
+      36,
       lineLabel,
       shopManager.canBuyLineUpgrade() ? 0x3388cc : 0x444444,
       shopManager.canBuyLineUpgrade(),
@@ -265,6 +265,7 @@ export class UIManager {
     );
     lineBtnContainer.setData("dynamic", true);
 
+    // 2. Snelheid Upgrade
     const speedCost = shopManager.getSpeedUpgradeCost();
     const speedLabel =
       speedCost > 0
@@ -273,9 +274,9 @@ export class UIManager {
 
     const speedBtnContainer = this.createButton(
       sw / 2,
-      sh / 2 + sh * 0.12,
+      sh / 2 + sh * 0.06,
       320,
-      38,
+      36,
       speedLabel,
       shopManager.canBuySpeedUpgrade() ? 0x3388cc : 0x444444,
       shopManager.canBuySpeedUpgrade(),
@@ -288,6 +289,7 @@ export class UIManager {
     );
     speedBtnContainer.setData("dynamic", true);
 
+    // 3. Sterker Haakje Upgrade
     const hookCost = shopManager.getHookUpgradeCost();
     const hookLabel =
       hookCost > 0
@@ -296,9 +298,9 @@ export class UIManager {
 
     const hookBtnContainer = this.createButton(
       sw / 2,
-      sh / 2 + sh * 0.23,
+      sh / 2 + sh * 0.16,
       320,
-      38,
+      36,
       hookLabel,
       shopManager.canBuyHookUpgrade() ? 0x3388cc : 0x444444,
       shopManager.canBuyHookUpgrade(),
@@ -311,6 +313,31 @@ export class UIManager {
     );
     hookBtnContainer.setData("dynamic", true);
 
+    // 4. Haak Capaciteit Upgrade (Meerdere vissen tegelijk)
+    const capacityCost = shopManager.getCapacityUpgradeCost();
+    const maxCapacity = shopManager.getMaxHookCapacity();
+    const capacityLabel =
+      capacityCost > 0
+        ? `Haak Capaciteit [Max ${maxCapacity}] (Lvl ${shopManager.upgrades.hookCapacityLevel + 1}): €${capacityCost}`
+        : `Haak Capaciteit: MAX [Max ${maxCapacity}]`;
+
+    const capacityBtnContainer = this.createButton(
+      sw / 2,
+      sh / 2 + sh * 0.26,
+      320,
+      36,
+      capacityLabel,
+      shopManager.canBuyCapacityUpgrade() ? 0x3388cc : 0x444444,
+      shopManager.canBuyCapacityUpgrade(),
+      () => {
+        if (shopManager.buyCapacityUpgrade()) {
+          this.updateFishCount(shopManager.caughtFishList.length);
+          this.renderShopContent(shopManager, onShopStateChange);
+        }
+      },
+    );
+    capacityBtnContainer.setData("dynamic", true);
+
     this.shopContainer.add([
       coinsHeader,
       invText,
@@ -318,6 +345,7 @@ export class UIManager {
       lineBtnContainer,
       speedBtnContainer,
       hookBtnContainer,
+      capacityBtnContainer,
     ]);
   }
 
@@ -337,7 +365,7 @@ export class UIManager {
 
     const txt = this.scene.add
       .text(0, 0, label, {
-        fontSize: "13px",
+        fontSize: "12px",
         color: "#ffffff",
         fontStyle: "bold",
       })

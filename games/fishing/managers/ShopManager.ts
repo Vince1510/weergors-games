@@ -4,6 +4,7 @@ export interface UpgradeLevel {
   lineLengthLevel: number;
   hookQualityLevel: number;
   speedUpgradeLevel: number;
+  hookCapacityLevel: number;
 }
 
 export interface CaughtFishItem {
@@ -11,6 +12,7 @@ export interface CaughtFishItem {
   name: string;
   value: number;
   color: number;
+  type?: string;
 }
 
 const STORAGE_KEY = "camping_cross_fishing_save_v1";
@@ -23,9 +25,10 @@ export class ShopManager {
     lineLengthLevel: 1,
     hookQualityLevel: 1,
     speedUpgradeLevel: 1,
+    hookCapacityLevel: 1,
   };
 
-  private maxLevel: number = 20; // Aantal upgrade levels verhoogd naar 20
+  private maxLevel: number = 20;
 
   constructor() {
     this.loadFromLocalStorage();
@@ -57,6 +60,7 @@ export class ShopManager {
             lineLengthLevel: parsed.upgrades.lineLengthLevel || 1,
             hookQualityLevel: parsed.upgrades.hookQualityLevel || 1,
             speedUpgradeLevel: parsed.upgrades.speedUpgradeLevel || 1,
+            hookCapacityLevel: parsed.upgrades.hookCapacityLevel || 1,
           };
         }
       }
@@ -69,6 +73,7 @@ export class ShopManager {
     fishName: string,
     value: number,
     color: number,
+    fishType: string = "standard",
   ): void {
     const uniqueId =
       typeof crypto !== "undefined" && crypto.randomUUID
@@ -80,7 +85,9 @@ export class ShopManager {
       name: fishName,
       value: value,
       color: color,
+      type: fishType,
     });
+
     this.saveToLocalStorage();
   }
 
@@ -95,13 +102,11 @@ export class ShopManager {
     return totalEarnings;
   }
 
-  // Diepte schaalt nu door tot ver voorbij 10.000px naarmate je vordert tot level 20
   public getMaxHookDepth(): number {
-    return 1500 + this.upgrades.lineLengthLevel * 500;
+    return 3000 + this.upgrades.lineLengthLevel * 1800;
   }
 
   public getTensionMultiplier(): number {
-    // Elk level maakt de haak sterker (loopt geleidelijk terug tot 0.15)
     return Math.max(0.15, 1 - (this.upgrades.hookQualityLevel - 1) * 0.045);
   }
 
@@ -109,8 +114,18 @@ export class ShopManager {
     return 320 + (this.upgrades.speedUpgradeLevel - 1) * 45;
   }
 
-  // --- DYNAMISCHE KOSTEN BEREKENING (T/M LEVEL 20) ---
+  // Hoeveel vissen je tegelijk aan de haak mag hebben (loopt op van 1 tot maximaal 10)
+  public getMaxHookCapacity(): number {
+    // Schaalt lineair mee van 1 vis (bij level 1) tot 10 vissen (bij level 20)
+    const capacity =
+      1 +
+      Math.floor(
+        ((this.upgrades.hookCapacityLevel - 1) / (this.maxLevel - 1)) * 9,
+      );
+    return Phaser.Math.Clamp(capacity, 1, 10);
+  }
 
+  // --- DYNAMISCHE KOSTEN BEREKENING ---
   public getLineUpgradeCost(): number {
     if (this.upgrades.lineLengthLevel >= this.maxLevel) return 0;
     return Math.floor(50 * Math.pow(1.3, this.upgrades.lineLengthLevel - 1));
@@ -165,6 +180,26 @@ export class ShopManager {
     if (this.canBuySpeedUpgrade()) {
       this.coins -= this.getSpeedUpgradeCost();
       this.upgrades.speedUpgradeLevel++;
+      this.saveToLocalStorage();
+      return true;
+    }
+    return false;
+  }
+
+  public getCapacityUpgradeCost(): number {
+    if (this.upgrades.hookCapacityLevel >= this.maxLevel) return 0;
+    return Math.floor(80 * Math.pow(1.35, this.upgrades.hookCapacityLevel - 1));
+  }
+
+  public canBuyCapacityUpgrade(): boolean {
+    const cost = this.getCapacityUpgradeCost();
+    return cost > 0 && this.coins >= cost;
+  }
+
+  public buyCapacityUpgrade(): boolean {
+    if (this.canBuyCapacityUpgrade()) {
+      this.coins -= this.getCapacityUpgradeCost();
+      this.upgrades.hookCapacityLevel++;
       this.saveToLocalStorage();
       return true;
     }

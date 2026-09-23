@@ -47,38 +47,29 @@ export class EnvironmentManager {
       .setOrigin(0)
       .setDepth(0);
 
-    // 2. Genereer een vloeibare kleurverloop-textuur (Gradient)
+    // 2. Genereer een compacte gradient-textuur (veilig binnen browser canvas limieten)
     const key = "ocean_gradient_texture";
 
     if (!this.scene.textures.exists(key)) {
-      const canvas = this.scene.textures.createCanvas(
-        key,
-        32,
-        this.worldHeight - 100,
-      );
+      const canvas = this.scene.textures.createCanvas(key, 32, 512);
       if (canvas) {
         const ctx = canvas.context;
-        const gradient = ctx.createLinearGradient(
-          0,
-          0,
-          0,
-          this.worldHeight - 100,
-        );
+        const gradient = ctx.createLinearGradient(0, 0, 0, 512);
 
-        // Vloeiende overgang van lichtblauw -> diepblauw -> abyssaal zwart
+        // Vloeiende overgang van lichtblauw naar abyssaal zwart
         gradient.addColorStop(0.0, "#2288dd"); // Oppervlakte
         gradient.addColorStop(0.15, "#1565c0"); // Middeldiep
         gradient.addColorStop(0.4, "#0d47a1"); // Diepzee
         gradient.addColorStop(0.7, "#0a2540"); // Schemerzone
-        gradient.addColorStop(1.0, "#081426"); // Abyssale bodem (Zichtbaar nachtblauw)
+        gradient.addColorStop(1.0, "#081426"); // Abyssale bodem
 
         ctx.fillStyle = gradient;
-        ctx.fillRect(0, 0, 32, this.worldHeight - 100);
+        ctx.fillRect(0, 0, 32, 512);
         canvas.refresh();
       }
     }
 
-    // 3. Plaats de gradient-afbeelding over de hele oceaan
+    // 3. Rek de textuur netjes uit over de volledige diepte van de wereld
     const oceanImg = this.scene.add
       .image(0, 100, key)
       .setOrigin(0, 0)

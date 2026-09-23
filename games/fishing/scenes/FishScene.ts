@@ -8,8 +8,7 @@ import { ShopManager } from "../managers/ShopManager";
 
 export class FishingScene extends Phaser.Scene {
   private worldWidth: number = 2400;
-  private worldHeight: number = 10000;
-
+  private worldHeight: number = 50000;
   private inputManager!: InputManager;
   private envManager!: EnvironmentManager;
   private ecoManager!: EcosystemManager;
@@ -28,15 +27,63 @@ export class FishingScene extends Phaser.Scene {
   private isPausedForShop: boolean = false;
   private maxDepthWarningShown: boolean = false;
 
-  private hookedFish: Fish | null = null;
+  // Aangepast: Een lijst van meerdere gevangen vissen tegelijk!
+  private hookedFishes: Fish[] = [];
   private lineTension: number = 0;
 
   constructor() {
     super({ key: "FishingScene" });
   }
 
+  preload(): void {
+    const fishTypes = [
+      "angelfish",
+      "anglerfish",
+      "axolotl",
+      "beta",
+      "clownfish",
+      "crab",
+      "dolphin",
+      "eel",
+      "electric_ray",
+      "flounder",
+      "giant_crab",
+      "goldfish",
+      "hammerhead",
+      "isopod",
+      "jellyfish",
+      "lightning",
+      "lionfish",
+      "mandarin",
+      "manta",
+      "monster",
+      "oarfish",
+      "octopus",
+      "orca",
+      "pelican_eel",
+      "piranha",
+      "pufferfish",
+      "sardine",
+      "seadragon",
+      "seahorse",
+      "shark",
+      "squid",
+      "standard",
+      "starfish",
+      "stingray",
+      "sunfish",
+      "swordfish",
+      "vampire_squid",
+      "whale",
+    ];
+
+    fishTypes.forEach((fish) => {
+      this.load.image(`fish_${fish}`, `/games/fishing/assets/${fish}.png`);
+    });
+  }
+
   create(): void {
-    this.hookedFish = null;
+    this.hookedFishes = [];
     this.lineTension = 0;
     this.hookVx = 0;
     this.isHookRetracted = true;
@@ -99,7 +146,7 @@ export class FishingScene extends Phaser.Scene {
     const rodTipY = this.boat.y - 28;
 
     const maxHookY = this.shopManager.getMaxHookDepth();
-    const currentHookSpeed = this.shopManager.getHookSpeed(); // Dynamische haaksnelheid uit ShopManager
+    const currentHookSpeed = this.shopManager.getHookSpeed();
 
     // --- MODUS 1: HAAK BINNEN (VAREN) ---
     if (this.isHookRetracted) {
@@ -178,8 +225,14 @@ export class FishingScene extends Phaser.Scene {
       } else if (inputState.up) {
         this.maxDepthWarningShown = false;
         let currentPullSpeed = currentHookSpeed;
-        if (this.hookedFish) {
-          currentPullSpeed -= this.hookedFish.points * 0.4;
+
+        // Verminder de inhaalsnelheid op basis van het totale gewicht/punten van alle gehaakte vissen
+        const totalFishPoints = this.hookedFishes.reduce(
+          (sum, f) => sum + f.points,
+          0,
+        );
+        if (this.hookedFishes.length > 0) {
+          currentPullSpeed -= totalFishPoints * 0.25;
         }
         this.hookContainer.y -= Math.max(80, currentPullSpeed) * deltaSec;
 
@@ -202,58 +255,99 @@ export class FishingScene extends Phaser.Scene {
             },
           );
 
-          if (this.hookedFish) {
+          // Als er vissen zijn binnengehaald, voeg ze allemaal toe aan de emmer!
+          if (this.hookedFishes.length > 0) {
             const fishNames: Record<string, string> = {
+              angelfish: "Keizersvis 🐟",
+              anglerfish: "Hengelvis 🎣",
+              axolotl: "Axolotl 🦎",
+              beta: "Kempvis 🐠",
+              clownfish: "Clownvis 🐠",
+              crab: "Krab 🦀",
               dolphin: "Dolfijn 🐬",
-              sunfish: "Maanvis 🌕",
-              jellyfish: "Kwal 🪼",
-              piranha: "Piranha 🐟",
               eel: "Paling 🐍",
-              swordfish: "Zwaardvis 🗡️",
-              shark: "Haai 🦈",
+              electric_ray: "Sidderaal ⚡",
+              flounder: "Bot / Platvis 🐟",
+              giant_crab: "Reuzenkrab 🦀",
+              goldfish: "Goudvis 🐠",
+              hammerhead: "Hamerhaai 🦈",
+              isopod: "Reuzenisopod 🐛",
+              jellyfish: "Kwal 🪼",
               lightning: "Lightning Eel ⚡",
-              octopus: "Octopus 🐙",
+              lionfish: "Koraalduivel 🐉",
+              mandarin: "Mandarijnvis 🐠",
+              manta: "Mantarog 🌊",
               monster: "Diepzee Monster 👹",
-              whale: "Walvis 🐋",
+              oarfish: "Riempjesvis 🐍",
+              octopus: "Octopus 🐙",
+              orca: "Orka 🐋",
+              pelican_eel: "Pelikaanaling 🐟",
+              piranha: "Piranha 🐟",
+              pufferfish: "Kogelvis 🐡",
+              sardine: "Sardine 🐟",
+              seadragon: "Bladerachtige Zeedraak 🌿",
+              seahorse: "Zeepaardje 🌊",
+              shark: "Haai 🦈",
+              squid: "Inktvis 🦑",
               standard: "Vis 🐠",
+              starfish: "Zeester ⭐",
+              stingray: "Pijlstaartrog 🦈",
+              sunfish: "Maanvis 🌕",
+              swordfish: "Zwaardvis 🗡️",
+              vampire_squid: "Vampierinktvis 🦑",
+              whale: "Walvis 🐋",
             };
 
-            const name = fishNames[this.hookedFish.fishType] || "Vis 🐠";
+            this.hookedFishes.forEach((fish) => {
+              const name = fishNames[fish.fishType] || "Vis 🐠";
+              this.shopManager.addFishToInventory(
+                name,
+                fish.points,
+                0xffaa00,
+                fish.fishType,
+              );
+              fish.destroy();
+            });
 
-            this.shopManager.addFishToInventory(
-              name,
-              this.hookedFish.points,
-              0xffaa00,
-            );
             this.uiManager.updateFishCount(
               this.shopManager.caughtFishList.length,
             );
-            this.uiManager.showStatus(`${name} gevangen!`, 1800);
+            this.uiManager.showStatus(
+              `${this.hookedFishes.length} vissen gevangen!`,
+              1800,
+            );
+            this.hookedFishes = [];
             this.uiManager.hideTensionBar();
-            this.hookedFish.destroy();
-            this.hookedFish = null;
             this.lineTension = 0;
           }
         }
       }
 
-      // GEHAAKTE VIS & MELDING BIJ LOSBREKEN
-      if (this.hookedFish) {
+      // MEERDERE GEHAAKTE VISSEN & SPANNING BEHEER
+      if (this.hookedFishes.length > 0) {
         const hookCurveX = this.hookContainer.x + 6;
         const hookCurveY = this.hookContainer.y + 14;
 
-        this.hookedFish.x = hookCurveX;
-        this.hookedFish.y = hookCurveY + this.hookedFish.size / 2;
+        // Verdeel de gehaakte vissen netjes onder elkaar rondom de haak
+        this.hookedFishes.forEach((fish, index) => {
+          fish.x = hookCurveX + index * 8;
+          fish.y = hookCurveY + 10 + index * 15;
 
-        if (this.hookedFish.isStruggling) {
-          this.hookVx += Math.random() > 0.5 ? 120 : -120;
-        }
+          if (fish.isStruggling) {
+            this.hookVx += Math.random() > 0.5 ? 120 : -120;
+          }
+        });
 
         const tensionMultiplier = this.shopManager.getTensionMultiplier();
+        const totalPoints = this.hookedFishes.reduce(
+          (sum, f) => sum + f.points,
+          0,
+        );
+        const anyStruggling = this.hookedFishes.some((f) => f.isStruggling);
 
-        if (inputState.up && this.hookedFish.isStruggling) {
+        if (inputState.up && anyStruggling) {
           this.lineTension +=
-            (35 + this.hookedFish.points * 0.25) * tensionMultiplier * deltaSec;
+            (25 + totalPoints * 0.15) * tensionMultiplier * deltaSec;
         } else if (!inputState.up) {
           this.lineTension = Math.max(0, this.lineTension - 40 * deltaSec);
         }
@@ -261,13 +355,13 @@ export class FishingScene extends Phaser.Scene {
         this.uiManager.updateTension(this.lineTension);
 
         if (this.lineTension >= 80) {
-          this.uiManager.showStatus("Vis los! Upgrade haakje.", 2000);
+          this.uiManager.showStatus("Te veel gewicht! Lijn gebroken.", 2000);
           this.uiManager.hideTensionBar();
 
-          if (this.hookedFish) {
-            this.hookedFish.resetAfterEscape();
-            this.hookedFish = null;
-          }
+          this.hookedFishes.forEach((fish) => {
+            fish.resetAfterEscape();
+          });
+          this.hookedFishes = [];
           this.lineTension = 0;
           return;
         }
@@ -390,9 +484,18 @@ export class FishingScene extends Phaser.Scene {
   }
 
   private handleCatch(_hook: Phaser.GameObjects.Container, fish: Fish): void {
-    if (this.hookedFish || fish.isHooked || this.isHookRetracted) return;
-    this.hookedFish = fish;
+    if (fish.isHooked || this.isHookRetracted) return;
+
+    // Haal de maximale capaciteit op die je in de shop hebt geupgrade
+    const maxCapacity = this.shopManager.getMaxHookCapacity();
+
+    // Strenge controle: Als de haak vol zit, kan deze vis NIET worden gevangen!
+    if (this.hookedFishes.length >= maxCapacity) {
+      return;
+    }
+
     fish.isHooked = true;
-    this.lineTension = 10;
+    this.hookedFishes.push(fish);
+    this.lineTension += 10;
   }
 }
