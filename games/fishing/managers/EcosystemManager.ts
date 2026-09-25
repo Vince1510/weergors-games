@@ -22,13 +22,13 @@ export class EcosystemManager {
     this.fishGroup = this.scene.physics.add.group();
 
     const fishTiers: SpawnerTier[] = [
-      // ==========================================
-      // TIER 1: Oppervlakte & Ondiep (0m - 4000m)
-      // ==========================================
+      // =========================================================================
+      // TIER 1: Oppervlakte & Ondiep (0m - 4000m / Laagste waarde, direct bereikbaar)
+      // =========================================================================
       {
         count: 8,
         speed: 0.8,
-        points: 10,
+        points: 5,
         color: 0xffaa00,
         size: 24,
         yMin: 200,
@@ -38,7 +38,7 @@ export class EcosystemManager {
       {
         count: 6,
         speed: 0.9,
-        points: 20,
+        points: 8,
         color: 0x94a3b8,
         size: 20,
         yMin: 300,
@@ -48,7 +48,7 @@ export class EcosystemManager {
       {
         count: 6,
         speed: 0.8,
-        points: 30,
+        points: 12,
         color: 0xf59e0b,
         size: 25,
         yMin: 200,
@@ -58,7 +58,7 @@ export class EcosystemManager {
       {
         count: 5,
         speed: 0.9,
-        points: 35,
+        points: 15,
         color: 0xff6600,
         size: 26,
         yMin: 300,
@@ -68,7 +68,7 @@ export class EcosystemManager {
       {
         count: 5,
         speed: 1.0,
-        points: 45,
+        points: 18,
         color: 0x3b82f6,
         size: 32,
         yMin: 400,
@@ -78,7 +78,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: 0.6,
-        points: 45,
+        points: 20,
         color: 0xfacc15,
         size: 30,
         yMin: 250,
@@ -88,7 +88,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: 0.5,
-        points: 55,
+        points: 25,
         color: 0xef4444,
         size: 28,
         yMin: 400,
@@ -98,7 +98,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: 0.4,
-        points: 60,
+        points: 28,
         color: 0xf97316,
         size: 28,
         yMin: 200,
@@ -108,7 +108,7 @@ export class EcosystemManager {
       {
         count: 5,
         speed: 0.4,
-        points: 25,
+        points: 15,
         color: 0xf97316,
         size: 22,
         yMin: 500,
@@ -118,7 +118,7 @@ export class EcosystemManager {
       {
         count: 5,
         speed: 0.7,
-        points: 55,
+        points: 30,
         color: 0x06b6d4,
         size: 24,
         yMin: 800,
@@ -126,13 +126,13 @@ export class EcosystemManager {
         type: "mandarin",
       },
 
-      // ==========================================
-      // TIER 2: Middeldiep (4000m - 14000m)
-      // ==========================================
+      // =========================================================================
+      // TIER 2: Middeldiep (4000m - 14000m / Betere waarde, vereist line-upgrades)
+      // =========================================================================
       {
         count: 5,
         speed: 1.3,
-        points: 40,
+        points: 45,
         color: 0x4682b4,
         size: 36,
         yMin: 4200,
@@ -142,7 +142,7 @@ export class EcosystemManager {
       {
         count: 5,
         speed: 1.5,
-        points: 80,
+        points: 55,
         color: 0xdda0dd,
         size: 28,
         yMin: 4500,
@@ -152,7 +152,7 @@ export class EcosystemManager {
       {
         count: 5,
         speed: 2.1,
-        points: 70,
+        points: 60,
         color: 0xcc2222,
         size: 28,
         yMin: 4800,
@@ -162,7 +162,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: 0.9,
-        points: 90,
+        points: 70,
         color: 0x556b2f,
         size: 34,
         yMin: 5000,
@@ -172,7 +172,7 @@ export class EcosystemManager {
       {
         count: 6,
         speed: 1.1,
-        points: 50,
+        points: 75,
         color: 0x10b981,
         size: 32,
         yMin: 5500,
@@ -193,7 +193,7 @@ export class EcosystemManager {
       {
         count: 5,
         speed: 0.9,
-        points: 75,
+        points: 100,
         color: 0x94a3b8,
         size: 35,
         yMin: 6500,
@@ -203,7 +203,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: 0.9,
-        points: 85,
+        points: 120,
         color: 0x3b82f6,
         size: 42,
         yMin: 7000,
@@ -213,7 +213,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: 0.6,
-        points: 85,
+        points: 140,
         color: 0x64748b,
         size: 45,
         yMin: 8000,
@@ -221,13 +221,13 @@ export class EcosystemManager {
         type: "stingray",
       },
 
-      // ==========================================
-      // TIER 3: Diepzee (14000m - 26000m)
-      // ==========================================
+      // =========================================================================
+      // TIER 3: Diepzee (14000m - 26000m / Serieuze munten voor gevorderde spelers)
+      // =========================================================================
       {
         count: 4,
         speed: 0.6,
-        points: 95,
+        points: 160,
         color: 0xa16207,
         size: 32,
         yMin: 14500,
@@ -237,7 +237,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: 0.5,
-        points: 65,
+        points: 150,
         color: 0xef4444,
         size: 26,
         yMin: 15000,
@@ -247,7 +247,7 @@ export class EcosystemManager {
       {
         count: 5,
         speed: 1.8,
-        points: 150,
+        points: 220,
         color: 0x20b2aa,
         size: 45,
         yMin: 15500,
@@ -257,7 +257,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: 1.4,
-        points: 160,
+        points: 240,
         color: 0xf43f5e,
         size: 35,
         yMin: 16000,
@@ -267,7 +267,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: -1.0,
-        points: 180,
+        points: 280,
         color: 0x708090,
         size: 55,
         yMin: 17000,
@@ -277,7 +277,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: 2.4,
-        points: 220,
+        points: 320,
         color: 0x1e1b4b,
         size: 38,
         yMin: 18000,
@@ -288,7 +288,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: 0.7,
-        points: 250,
+        points: 360,
         color: 0x9333ea,
         size: 44,
         yMin: 19000,
@@ -298,7 +298,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: 1.6,
-        points: 170,
+        points: 400,
         color: 0x64748b,
         size: 55,
         yMin: 20000,
@@ -306,13 +306,13 @@ export class EcosystemManager {
         type: "hammerhead",
       },
 
-      // ==========================================
-      // TIER 4: Abyssale Zone & Bodem (26000m - 38000m+)
-      // ==========================================
+      // =========================================================================
+      // TIER 4: Abyssale Zone & Bodem (26000m - 38000m+ / End-game rijkdom)
+      // =========================================================================
       {
         count: 4,
         speed: 1.2,
-        points: 200,
+        points: 450,
         color: 0x0f172a,
         size: 70,
         yMin: 26500,
@@ -322,7 +322,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: 0.8,
-        points: 160,
+        points: 480,
         color: 0x450a0a,
         size: 38,
         yMin: 27500,
@@ -332,7 +332,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: 0.7,
-        points: 210,
+        points: 520,
         color: 0xfbcfe8,
         size: 30,
         yMin: 28500,
@@ -342,7 +342,7 @@ export class EcosystemManager {
       {
         count: 4,
         speed: 0.8,
-        points: 300,
+        points: 580,
         color: 0x1e293b,
         size: 40,
         yMin: 29500,
@@ -352,7 +352,7 @@ export class EcosystemManager {
       {
         count: 3,
         speed: 0.9,
-        points: 380,
+        points: 650,
         color: 0x0f172a,
         size: 50,
         yMin: 30500,
@@ -362,7 +362,7 @@ export class EcosystemManager {
       {
         count: 3,
         speed: 1.2,
-        points: 500,
+        points: 800,
         color: 0x0f172a,
         size: 60,
         yMin: 31500,
@@ -373,7 +373,7 @@ export class EcosystemManager {
       {
         count: 3,
         speed: 0.6,
-        points: 350,
+        points: 850,
         color: 0x991b1b,
         size: 65,
         yMin: 32500,
@@ -384,7 +384,7 @@ export class EcosystemManager {
       {
         count: 3,
         speed: 0.7,
-        points: 280,
+        points: 900,
         color: 0xf8fafc,
         size: 85,
         yMin: 33500,
@@ -394,7 +394,7 @@ export class EcosystemManager {
       {
         count: 3,
         speed: 0.5,
-        points: 310,
+        points: 950,
         color: 0xcbd5e1,
         size: 30,
         yMin: 34500,
@@ -404,7 +404,7 @@ export class EcosystemManager {
       {
         count: 3,
         speed: 0.8,
-        points: 340,
+        points: 1000,
         color: 0x172554,
         size: 45,
         yMin: 35500,
@@ -414,7 +414,7 @@ export class EcosystemManager {
       {
         count: 2,
         speed: 0.5,
-        points: 1200,
+        points: 1500,
         color: 0x1e293b,
         size: 90,
         yMin: 36500,
