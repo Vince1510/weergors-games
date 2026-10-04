@@ -93,4 +93,14 @@ export class Fish extends Phaser.GameObjects.Container {
       this.angle = Phaser.Math.Linear(this.angle, -90, 0.1);
     }
   }
+
+  public updateHooked(deltaSec: number): void {
+    if (!this.isHooked) return;
+
+    this.struggleTimer -= deltaSec;
+    if (this.struggleTimer <= 0) {
+      this.isStruggling = !this.isStruggling;
+      this.struggleTimer = Phaser.Math.Between(1, 3);
+    }
+  }
 }
