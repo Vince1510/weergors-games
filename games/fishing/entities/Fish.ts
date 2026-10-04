@@ -19,6 +19,7 @@ export class Fish extends Phaser.GameObjects.Container {
 
   public struggleTimer: number = 0;
   public isStruggling: boolean = false;
+  public escapeCooldown: number = 0; // Cooldown zodat hij niet meteen weer gehaakt wordt
 
   private fishSprite: Phaser.GameObjects.Image;
 
@@ -36,7 +37,6 @@ export class Fish extends Phaser.GameObjects.Container {
 
     this.fishSprite = scene.add.image(0, 0, textureKey);
 
-    // Grourdere schaal factor (2.8x) zodat ze goed zichtbaar zijn
     const targetSize = config.size * 2.8;
     const baseScale = targetSize / Math.max(this.fishSprite.width, 1);
     this.fishSprite.setScale(baseScale);
@@ -49,12 +49,19 @@ export class Fish extends Phaser.GameObjects.Container {
     const body = this.body as Phaser.Physics.Arcade.Body;
     if (body) {
       body.setAllowGravity(false);
-      body.setSize(targetSize * 1.2, targetSize);
-      body.setOffset(-targetSize / 2, -targetSize / 2);
     }
+
+    if (!scene.physics.world.debugGraphic) {
+      scene.physics.world.createDebugGraphic();
+    }
+    scene.physics.world.debugGraphic.setVisible(true);
   }
 
   public updateFish(screenWidth: number, deltaSec: number): void {
+    if (this.escapeCooldown > 0) {
+      this.escapeCooldown -= deltaSec;
+    }
+
     if (this.isHooked) {
       this.scaleX = 1;
       this.scaleY = 1;
@@ -63,8 +70,30 @@ export class Fish extends Phaser.GameObjects.Container {
     }
 
     this.angle = 0;
-    this.scaleX = this.speed > 0 ? 1 : -1;
+    this.scaleX = 1;
     this.scaleY = 1;
+
+    const movingRight = this.speed > 0;
+    this.fishSprite.setFlipX(!movingRight);
+
+    const body = this.body as Phaser.Physics.Arcade.Body;
+    if (body) {
+      // Bepaal een net formaat voor de hitbox (bijv. 60% van de visgrootte)
+      const hitW = this.fishSprite.displayWidth * 0.6;
+      const hitH = this.fishSprite.displayHeight * 0.6;
+
+      body.setSize(hitW, hitH);
+
+      // Centreer de hitbox exact rondom het ankerpunt (0,0 van de container)
+      const offsetX =
+        (this.fishSprite.displayWidth - hitW) / 2 -
+        this.fishSprite.displayWidth / 2;
+      const offsetY =
+        (this.fishSprite.displayHeight - hitH) / 2 -
+        this.fishSprite.displayHeight / 2;
+
+      body.setOffset(offsetX, offsetY);
+    }
 
     this.x += this.speed;
 
@@ -77,10 +106,11 @@ export class Fish extends Phaser.GameObjects.Container {
 
   public resetAfterEscape(): void {
     this.isHooked = false;
+    this.isStruggling = false;
     this.angle = 0;
     this.scaleY = 1;
     this.speed = -this.speed * 1.2;
-    this.scaleX = this.speed > 0 ? 1 : -1;
+    this.escapeCooldown = 1.5; // 1.5 seconde immuun zodat de vis echt wegzweemt en niet direct herhaakt wordt
   }
 
   private updateStruggleAnimation(deltaSec: number): void {
@@ -92,5 +122,10 @@ export class Fish extends Phaser.GameObjects.Container {
     } else {
       this.angle = Phaser.Math.Linear(this.angle, -90, 0.1);
     }
+  }
+
+  public updateHooked(deltaSec: number): void {
+    if (!this.isHooked) return;
+    this.updateStruggleAnimation(deltaSec);
   }
 }

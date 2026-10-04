@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { ShopManager } from "./ShopManager";
+import { ShopManager, ALL_FISH_TYPES, FISH_DISPLAY_NAMES } from "./ShopManager";
 
 export class UIManager {
   private scene: Phaser.Scene;
@@ -13,6 +13,11 @@ export class UIManager {
   private shopContainer!: Phaser.GameObjects.Container;
   private closeBtnContainer!: Phaser.GameObjects.Container;
   private isShopOpen: boolean = false;
+
+  private collectionContainer!: Phaser.GameObjects.Container;
+  private collectionCloseBtnContainer!: Phaser.GameObjects.Container;
+  private isCollectionOpen: boolean = false;
+  private collectionPage: number = 0;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -57,22 +62,23 @@ export class UIManager {
       .setDepth(100);
 
     const btnWidth = 130;
-    const btnHeight = 42;
+    const btnHeight = 40;
 
+    // --- WINKEL KNOP ---
     const shopBtnBg = this.scene.add
       .rectangle(0, 0, btnWidth, btnHeight, 0x228833)
       .setStrokeStyle(2, 0xffffff);
 
     const shopBtnTxt = this.scene.add
       .text(0, 0, "Winkel 🛒", {
-        fontSize: "16px",
+        fontSize: "15px",
         color: "#ffffff",
         fontStyle: "bold",
       })
       .setOrigin(0.5);
 
     const shopBtn = this.scene.add
-      .container(this.scene.scale.width - 80, 40, [shopBtnBg, shopBtnTxt])
+      .container(this.scene.scale.width - 80, 35, [shopBtnBg, shopBtnTxt])
       .setScrollFactor(0)
       .setDepth(250);
 
@@ -83,13 +89,36 @@ export class UIManager {
       btnHeight,
     );
     shopBtn.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
-
     shopBtn.on("pointerdown", () => {
       this.toggleShop(shopManager, onShopStateChange);
     });
 
+    // --- COLLECTIE KNOP (Onder winkel) ---
+    const collBtnBg = this.scene.add
+      .rectangle(0, 0, btnWidth, btnHeight, 0x1155aa)
+      .setStrokeStyle(2, 0xffffff);
+
+    const collBtnTxt = this.scene.add
+      .text(0, 0, "Collectie 📖", {
+        fontSize: "15px",
+        color: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+
+    const collBtn = this.scene.add
+      .container(this.scene.scale.width - 80, 82, [collBtnBg, collBtnTxt])
+      .setScrollFactor(0)
+      .setDepth(250);
+
+    collBtn.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
+    collBtn.on("pointerdown", () => {
+      this.toggleCollection(shopManager, onShopStateChange);
+    });
+
     this.createTensionBar();
     this.createShopModal(shopManager, onShopStateChange);
+    this.createCollectionModal(shopManager, onShopStateChange);
   }
 
   public update(): void {
@@ -158,9 +187,71 @@ export class UIManager {
       closeHitArea,
       Phaser.Geom.Circle.Contains,
     );
-
     this.closeBtnContainer.on("pointerdown", () => {
       this.toggleShop(shopManager, onShopStateChange);
+    });
+  }
+
+  private createCollectionModal(
+    shopManager: ShopManager,
+    onShopStateChange: (isOpen: boolean) => void,
+  ): void {
+    const sw = this.scene.scale.width;
+    const sh = this.scene.scale.height;
+
+    const bgOverlay = this.scene.add
+      .rectangle(0, 0, sw, sh, 0x000000, 0.85)
+      .setOrigin(0);
+
+    const panel = this.scene.add
+      .rectangle(sw / 2, sh / 2, sw * 0.9, sh * 0.88, 0x0b192c)
+      .setStrokeStyle(4, 0x00ffcc);
+
+    const title = this.scene.add
+      .text(sw / 2, sh / 2 - sh * 0.39, "VISCOLLECTIE (0 / 38)", {
+        fontSize: "22px",
+        color: "#00ffcc",
+        fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 3,
+      })
+      .setOrigin(0.5)
+      .setName("collectionTitle");
+
+    this.collectionContainer = this.scene.add
+      .container(0, 0, [bgOverlay, panel, title])
+      .setScrollFactor(0)
+      .setDepth(400)
+      .setVisible(false);
+
+    const closeBtnBg = this.scene.add
+      .circle(0, 0, 22, 0xcc2222)
+      .setStrokeStyle(2, 0xffffff);
+
+    const closeBtnTxt = this.scene.add
+      .text(0, 0, "X", {
+        fontSize: "22px",
+        color: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+
+    this.collectionCloseBtnContainer = this.scene.add
+      .container(sw / 2 + sw * 0.41, sh / 2 - sh * 0.39, [
+        closeBtnBg,
+        closeBtnTxt,
+      ])
+      .setScrollFactor(0)
+      .setDepth(500)
+      .setVisible(false);
+
+    const closeHitArea = new Phaser.Geom.Circle(0, 0, 22);
+    this.collectionCloseBtnContainer.setInteractive(
+      closeHitArea,
+      Phaser.Geom.Circle.Contains,
+    );
+    this.collectionCloseBtnContainer.on("pointerdown", () => {
+      this.toggleCollection(shopManager, onShopStateChange);
     });
   }
 
@@ -168,6 +259,9 @@ export class UIManager {
     shopManager: ShopManager,
     onShopStateChange: (isOpen: boolean) => void,
   ): void {
+    if (this.isCollectionOpen) {
+      this.toggleCollection(shopManager, onShopStateChange);
+    }
     this.isShopOpen = !this.isShopOpen;
     this.shopContainer.setVisible(this.isShopOpen);
     this.closeBtnContainer.setVisible(this.isShopOpen);
@@ -176,6 +270,204 @@ export class UIManager {
     if (this.isShopOpen) {
       this.renderShopContent(shopManager, onShopStateChange);
     }
+  }
+
+  public toggleCollection(
+    shopManager: ShopManager,
+    onShopStateChange: (isOpen: boolean) => void,
+  ): void {
+    if (this.isShopOpen) {
+      this.toggleShop(shopManager, onShopStateChange);
+    }
+    this.isCollectionOpen = !this.isCollectionOpen;
+    this.collectionContainer.setVisible(this.isCollectionOpen);
+    this.collectionCloseBtnContainer.setVisible(this.isCollectionOpen);
+    onShopStateChange(this.isCollectionOpen);
+
+    if (this.isCollectionOpen) {
+      this.collectionPage = 0;
+      this.renderCollectionContent(shopManager);
+    }
+  }
+
+  private renderCollectionContent(shopManager: ShopManager): void {
+    this.collectionContainer.each((child: Phaser.GameObjects.GameObject) => {
+      if (child && child.getData("dynamic")) {
+        child.destroy();
+      }
+    });
+
+    const collectionData = shopManager.getCollectionStatus();
+    const unlockedCount = collectionData.filter((f) => f.isUnlocked).length;
+
+    const titleObj = this.collectionContainer.getByName(
+      "collectionTitle",
+    ) as Phaser.GameObjects.Text;
+    if (titleObj) {
+      titleObj.setText(
+        `VISCOLLECTIE (${unlockedCount} / ${ALL_FISH_TYPES.length})`,
+      );
+    }
+
+    const sw = this.scene.scale.width;
+    const sh = this.scene.scale.height;
+
+    const contentContainer = this.scene.add
+      .container(0, 0)
+      .setData("dynamic", true);
+    this.collectionContainer.add(contentContainer);
+
+    const itemsPerPage = 12;
+    const totalPages = Math.ceil(collectionData.length / itemsPerPage);
+    if (this.collectionPage >= totalPages) this.collectionPage = 0;
+    if (this.collectionPage < 0) this.collectionPage = totalPages - 1;
+
+    const startIndex = this.collectionPage * itemsPerPage;
+    const pageItems = collectionData.slice(
+      startIndex,
+      startIndex + itemsPerPage,
+    );
+
+    const columns = 4;
+    const cellWidth = 94;
+    const cellHeight = 84;
+    const totalGridWidth = columns * cellWidth;
+
+    const startX = sw / 2 - totalGridWidth / 2 + cellWidth / 2;
+    const startY = sh / 2 - sh * 0.22;
+
+    pageItems.forEach((item, index) => {
+      const col = index % columns;
+      const row = Math.floor(index / columns);
+
+      const x = startX + col * cellWidth;
+      const y = startY + row * cellHeight;
+
+      const box = this.scene.add
+        .rectangle(x, y, cellWidth - 8, cellHeight - 6, 0x162942, 0.9)
+        .setStrokeStyle(1.5, item.isUnlocked ? 0x00ffcc : 0x334455)
+        .setData("dynamic", true);
+
+      contentContainer.add(box);
+
+      const fishImgKey = `fish_${item.type}`;
+      if (this.scene.textures.exists(fishImgKey)) {
+        const img = this.scene.add
+          .image(x, y - 12, fishImgKey)
+          .setData("dynamic", true);
+        const maxDim = 38;
+        const scale = Math.min(maxDim / img.width, maxDim / img.height);
+        img.setScale(scale);
+        img.setAlpha(item.isUnlocked ? 1.0 : 0.5);
+        contentContainer.add(img);
+      }
+
+      const displayName = item.isUnlocked ? item.name : "???";
+      const nameTxt = this.scene.add
+        .text(x, y + 18, displayName, {
+          fontSize: "11px",
+          color: item.isUnlocked ? "#ffffff" : "#667788",
+          fontStyle: "bold",
+          align: "center",
+        })
+        .setOrigin(0.5)
+        .setData("dynamic", true);
+
+      contentContainer.add(nameTxt);
+    });
+
+    // --- PAGINERING PIJLTJES AAN DE ONDERKANT ---
+    const bottomY = sh / 2 + sh * 0.29;
+
+    // Vorige Pagina Knop (<)
+    const leftContainer = this.createPaginationButton(
+      sw / 2 - 80,
+      bottomY,
+      "<",
+      () => {
+        this.collectionPage--;
+        this.renderCollectionContent(shopManager);
+      },
+    );
+    leftContainer.setData("dynamic", true);
+
+    // Paginatekst
+    const pageIndicator = this.scene.add
+      .text(
+        sw / 2,
+        bottomY,
+        `Pagina ${this.collectionPage + 1} / ${totalPages}`,
+        {
+          fontSize: "14px",
+          color: "#ffd700",
+          fontStyle: "bold",
+        },
+      )
+      .setOrigin(0.5)
+      .setData("dynamic", true);
+
+    // Volgende Pagina Knop (>)
+    const rightContainer = this.createPaginationButton(
+      sw / 2 + 80,
+      bottomY,
+      ">",
+      () => {
+        this.collectionPage++;
+        this.renderCollectionContent(shopManager);
+      },
+    );
+    rightContainer.setData("dynamic", true);
+
+    this.collectionContainer.add([
+      leftContainer,
+      pageIndicator,
+      rightContainer,
+    ]);
+  }
+
+  private createPaginationButton(
+    x: number,
+    y: number,
+    label: string,
+    onClick: () => void,
+  ): Phaser.GameObjects.Container {
+    const width = 44;
+    const height = 32;
+
+    const bg = this.scene.add
+      .rectangle(0, 0, width, height, 0x1155aa)
+      .setStrokeStyle(2, 0xffffff);
+
+    const txt = this.scene.add
+      .text(0, 0, label, {
+        fontSize: "18px",
+        color: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+
+    const container = this.scene.add
+      .container(x, y, [bg, txt])
+      .setScrollFactor(0)
+      .setDepth(450);
+
+    const hitArea = new Phaser.Geom.Rectangle(
+      -width / 2,
+      -height / 2,
+      width,
+      height,
+    );
+    container.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
+
+    container.on("pointerdown", () => {
+      bg.setAlpha(0.7);
+      onClick();
+    });
+
+    container.on("pointerup", () => bg.setAlpha(1));
+    container.on("pointerout", () => bg.setAlpha(1));
+
+    return container;
   }
 
   private renderShopContent(
@@ -241,13 +533,11 @@ export class UIManager {
     );
     sellBtnContainer.setData("dynamic", true);
 
-    // 1. Vislijn Lengte Upgrade
     const lineCost = shopManager.getLineUpgradeCost();
     const lineLabel =
       lineCost > 0
-        ? `Vislijn Lengte (Lvl ${shopManager.upgrades.lineLengthLevel + 1}): €${lineCost}`
+        ? `Vislijn Lengte (Lvl ${shopManager.upgrades.lineLengthLevel}): €${lineCost}`
         : "Vislijn Lengte: MAX";
-
     const lineBtnContainer = this.createButton(
       sw / 2,
       sh / 2 - sh * 0.04,
@@ -265,13 +555,11 @@ export class UIManager {
     );
     lineBtnContainer.setData("dynamic", true);
 
-    // 2. Snelheid Upgrade
     const speedCost = shopManager.getSpeedUpgradeCost();
     const speedLabel =
       speedCost > 0
-        ? `Snelheid (Lvl ${shopManager.upgrades.speedUpgradeLevel + 1}): €${speedCost}`
+        ? `Snelheid (Lvl ${shopManager.upgrades.speedUpgradeLevel}): €${speedCost}`
         : "Snelheid: MAX";
-
     const speedBtnContainer = this.createButton(
       sw / 2,
       sh / 2 + sh * 0.06,
@@ -289,13 +577,11 @@ export class UIManager {
     );
     speedBtnContainer.setData("dynamic", true);
 
-    // 3. Sterker Haakje Upgrade
     const hookCost = shopManager.getHookUpgradeCost();
     const hookLabel =
       hookCost > 0
-        ? `Sterker Haakje (Lvl ${shopManager.upgrades.hookQualityLevel + 1}): €${hookCost}`
+        ? `Sterker Haakje (Lvl ${shopManager.upgrades.hookQualityLevel}): €${hookCost}`
         : "Sterker Haakje: MAX";
-
     const hookBtnContainer = this.createButton(
       sw / 2,
       sh / 2 + sh * 0.16,
@@ -313,14 +599,12 @@ export class UIManager {
     );
     hookBtnContainer.setData("dynamic", true);
 
-    // 4. Haak Capaciteit Upgrade (Meerdere vissen tegelijk)
     const capacityCost = shopManager.getCapacityUpgradeCost();
     const maxCapacity = shopManager.getMaxHookCapacity();
     const capacityLabel =
       capacityCost > 0
-        ? `Haak Capaciteit [Max ${maxCapacity}] (Lvl ${shopManager.upgrades.hookCapacityLevel + 1}): €${capacityCost}`
+        ? `Haak Capaciteit [Max ${maxCapacity}] (Lvl ${shopManager.upgrades.hookCapacityLevel}): €${capacityCost}`
         : `Haak Capaciteit: MAX [Max ${maxCapacity}]`;
-
     const capacityBtnContainer = this.createButton(
       sw / 2,
       sh / 2 + sh * 0.26,
@@ -362,7 +646,6 @@ export class UIManager {
     const bg = this.scene.add
       .rectangle(0, 0, width, height, bgColor)
       .setStrokeStyle(2, 0xffffff);
-
     const txt = this.scene.add
       .text(0, 0, label, {
         fontSize: "12px",
@@ -370,7 +653,6 @@ export class UIManager {
         fontStyle: "bold",
       })
       .setOrigin(0.5);
-
     const container = this.scene.add
       .container(x, y, [bg, txt])
       .setScrollFactor(0)
@@ -384,16 +666,13 @@ export class UIManager {
         height,
       );
       container.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
-
       container.on("pointerdown", () => {
         bg.setAlpha(0.7);
         onClick();
       });
-
       container.on("pointerup", () => bg.setAlpha(1));
       container.on("pointerout", () => bg.setAlpha(1));
     }
-
     return container;
   }
 
@@ -410,14 +689,11 @@ export class UIManager {
       this.tensionBarContainer.setVisible(false);
       return;
     }
-
     this.tensionBarContainer.setVisible(true);
     this.tensionBarFill.clear();
-
     let color = 0x00ff00;
     if (tension > 70) color = 0xff2222;
     else if (tension > 40) color = 0xffaa00;
-
     const barWidth = Phaser.Math.Clamp((tension / 100) * 196, 0, 196);
     this.tensionBarFill.fillStyle(color, 1);
     this.tensionBarFill.fillRoundedRect(-98, -8, barWidth, 16, 4);
@@ -443,7 +719,6 @@ export class UIManager {
     bg.fillRoundedRect(-102, -12, 204, 24, 8);
     bg.lineStyle(2, 0xffffff, 0.8);
     bg.strokeRoundedRect(-102, -12, 204, 24, 8);
-
     const label = this.scene.add
       .text(0, -26, "LIJNSPANNING", {
         fontSize: "12px",
@@ -451,9 +726,7 @@ export class UIManager {
         fontStyle: "bold",
       })
       .setOrigin(0.5);
-
     this.tensionBarFill = this.scene.add.graphics();
-
     this.tensionBarContainer = this.scene.add
       .container(screenWidth / 2, 85, [bg, label, this.tensionBarFill])
       .setScrollFactor(0)
