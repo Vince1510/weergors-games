@@ -2,8 +2,7 @@ import Phaser from "phaser";
 import { Fish } from "../entities/Fish";
 import { InputManager } from "./InputManager";
 import { UIManager } from "./UIManager";
-import { ShopManager } from "./ShopManager";
-
+import { ShopManager, FISH_DISPLAY_NAMES } from "./ShopManager";
 export class HookManager {
   private scene: Phaser.Scene;
   private inputManager: InputManager;
@@ -241,22 +240,27 @@ export class HookManager {
           );
 
           if (this.hookedFishes.length > 0) {
+            let totalEarned = 0;
+
             this.hookedFishes.forEach((fish) => {
-              const name = this.fishNames[fish.fishType] || "Vis 🐠";
+              totalEarned += fish.points;
+              // Voeg de vis toe aan de inventaris/collectie en verdien direct geld
+              this.shopManager.coins += fish.points;
               this.shopManager.addFishToInventory(
-                name,
+                FISH_DISPLAY_NAMES[fish.fishType] || "Vis",
                 fish.points,
-                0xffaa00,
+                0xffffff,
                 fish.fishType,
               );
               fish.destroy();
             });
 
-            this.uiManager.updateFishCount(
-              this.shopManager.caughtFishList.length,
-            );
+            // Sla direct op en update het geld op het scherm
+            this.shopManager.saveToLocalStorage();
+            this.uiManager.updateCoins(this.shopManager.coins);
+
             this.uiManager.showStatus(
-              `${this.hookedFishes.length} vissen gevangen!`,
+              `${this.hookedFishes.length} vissen binnengehaald! +€${totalEarned}`,
               1800,
             );
             this.hookedFishes = [];

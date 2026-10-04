@@ -160,6 +160,11 @@ export class FishingScene extends Phaser.Scene {
     this.hookManager.update(deltaSec, this.boat.x, rodTipX, rodTipY, () => {
       this.cameras.main.startFollow(this.boat, true, 0.08, 0.08);
     });
+    // Zorg dat de upgrade-knoppen alleen zichtbaar zijn als de haak volledig is ingetrokken
+    this.uiManager.setUpgradeButtonsVisible(
+      this.hookManager.isHookRetracted,
+      this.shopManager,
+    );
 
     const currentDepthMeters = Math.max(
       0,

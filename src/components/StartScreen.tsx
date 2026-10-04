@@ -37,7 +37,7 @@ const startOverlayStyle = {
   left: 0,
   width: "100vw",
   height: "100vh",
-  background: "#F9F6ED", // Crème achtergrond
+  background: "#F9F6ED",
   zIndex: 10000,
   display: "flex",
   flexDirection: "column" as const,
