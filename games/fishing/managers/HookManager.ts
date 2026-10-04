@@ -123,7 +123,15 @@ export class HookManager {
       | Phaser.Tilemaps.Tile,
   ): void {
     const fish = fishObj as Fish;
-    if (!fish || fish.isHooked || this.isHookRetracted) return;
+    // Controleer op isHooked, of de haak binnen is, én of de escapeCooldown nog actief is!
+    if (
+      !fish ||
+      fish.isHooked ||
+      this.isHookRetracted ||
+      (fish.escapeCooldown && fish.escapeCooldown > 0)
+    ) {
+      return;
+    }
 
     const maxCapacity = this.shopManager.getMaxHookCapacity();
     if (this.hookedFishes.length >= maxCapacity) {
@@ -271,9 +279,9 @@ export class HookManager {
             fish.updateHooked(deltaSec);
           }
 
-          console.log(
-            `[Vis ${index}] Type: ${fish.fishType} | isStruggling: ${fish.isStruggling} | Timer: ${fish.struggleTimer}`,
-          );
+          //   console.log(
+          //     `[Vis ${index}] Type: ${fish.fishType} | isStruggling: ${fish.isStruggling} | Timer: ${fish.struggleTimer}`,
+          //   );
 
           if (fish.isStruggling) {
             this.hookVx += Math.random() > 0.5 ? 120 : -120;
@@ -287,30 +295,43 @@ export class HookManager {
         );
         const anyStruggling = this.hookedFishes.some((f) => f.isStruggling);
 
+        // Console log om het gewicht en de huidige spanning te monitoren
         console.log(
-          `[Tension Update] anyStruggling: ${anyStruggling} | input.up: ${inputState.up} | Huidige spanning: ${this.lineTension}`,
+          `[Gewicht Check] Aantal vissen: ${this.hookedFishes.length} | Totaal punten (gewicht): ${totalPoints} | Huidige spanning: ${this.lineTension.toFixed(1)}`,
         );
 
         if (inputState.up && anyStruggling) {
-          this.lineTension +=
+          const increase =
             (25 + totalPoints * 0.15) * tensionMultiplier * deltaSec;
+          this.lineTension += increase;
+          console.log(
+            `[Spanning Stijgt] Lijn wordt ingehaald onder spanning. Toename: ${increase.toFixed(2)} | Nieuwe spanning: ${this.lineTension.toFixed(1)}`,
+          );
         } else if (!inputState.up) {
           this.lineTension = Math.max(0, this.lineTension - 40 * deltaSec);
         }
 
         this.uiManager.updateTension(this.lineTension);
-
         if (this.lineTension >= 80) {
-          console.log(`[Lijn Gebroken] Spanning bereikte ${this.lineTension}`);
-          this.uiManager.showStatus("Te veel gewicht! Lijn gebroken.", 2000);
-          this.uiManager.hideTensionBar();
+          console.log(`[TE VEEL GEWICHT!] Lijn te strak! Er schiet 1 vis los.`);
+          this.uiManager.showStatus(
+            "Te veel gewicht! Een vis is losgeschoten!",
+            2000,
+          );
 
-          this.hookedFishes.forEach((fish) => {
-            fish.resetAfterEscape();
-          });
-          this.hookedFishes = [];
-          this.lineTension = 0;
-          return;
+          const escapedFish = this.hookedFishes.pop();
+          if (escapedFish) {
+            escapedFish.resetAfterEscape();
+          }
+
+          // Zet de spanning direct omlaag en breek de update-iteratie af voor dit frame
+          this.lineTension = this.hookedFishes.length > 0 ? 35 : 0;
+          this.uiManager.updateTension(this.lineTension);
+
+          if (this.hookedFishes.length === 0) {
+            this.uiManager.hideTensionBar();
+          }
+          return; // Belangrijk: stop direct zodat de code niet doorrekent in hetzelfde frame!
         }
       } else {
         this.uiManager.hideTensionBar();
