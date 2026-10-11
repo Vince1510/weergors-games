@@ -229,7 +229,9 @@ export class JobTheCatScene extends Phaser.Scene {
     this.physics.pause();
     this.player.die();
 
-    this.uiManager.showGameOver(() => this.scene.restart());
+    this.uiManager.showGameOver(this.score, () => {
+      this.scene.restart();
+    });
   }
 
   private createPlaceholderTextures(): void {
