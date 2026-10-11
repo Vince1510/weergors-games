@@ -105,106 +105,154 @@ export class UIManager {
   }
 
   public renderUpgradeButtonsContent(shopManager: ShopManager): void {
-    // Verwijder oude knoppen volledig uit de scène
     this.upgradeButtonContainers.forEach((btn) => btn.destroy());
     this.upgradeButtonContainers = [];
 
     const sw = this.scene.scale.width;
     const sh = this.scene.scale.height;
-    const baseY = sh - 150; // Basispositie net boven de pijltjes
+
+    // Grid instellingen (2 kolommen x 2 rijen)
+    const cardWidth = 195;
+    const cardHeight = 64;
+    const spacingX = 12;
+    const spacingY = 10;
+
+    // Plaats het grid net boven de pijltjesknoppen
+    const startX = sw / 2 - (cardWidth + spacingX / 2);
+    const startY = sh - 220;
 
     const upgradesInfo = [
       {
-        label: `Vislijn lengte (Lvl ${shopManager.upgrades.lineLengthLevel}) - €${shopManager.getLineUpgradeCost()}`,
+        title: "Vislijn lengte",
+        level: shopManager.upgrades.lineLengthLevel,
+        cost: shopManager.getLineUpgradeCost(),
         canBuy: shopManager.canBuyLineUpgrade(),
+        iconKey: "icon_line", // Zorg dat deze texture bestaat of gebruik een fallback
         action: () => {
           if (shopManager.buyLineUpgrade()) {
             this.updateCoins(shopManager.coins);
             this.renderUpgradeButtonsContent(shopManager);
           }
         },
-        yOffset: -120,
+        col: 0,
+        row: 0,
       },
       {
-        label: `Snelheid (Lvl ${shopManager.upgrades.speedUpgradeLevel}) - €${shopManager.getSpeedUpgradeCost()}`,
+        title: "Snelheid",
+        level: shopManager.upgrades.speedUpgradeLevel,
+        cost: shopManager.getSpeedUpgradeCost(),
         canBuy: shopManager.canBuySpeedUpgrade(),
+        iconKey: "icon_speed",
         action: () => {
           if (shopManager.buySpeedUpgrade()) {
             this.updateCoins(shopManager.coins);
             this.renderUpgradeButtonsContent(shopManager);
           }
         },
-        yOffset: -80,
+        col: 1,
+        row: 0,
       },
       {
-        label: `Sterker haakje (Lvl ${shopManager.upgrades.hookQualityLevel}) - €${shopManager.getHookUpgradeCost()}`,
+        title: "Sterker haakje",
+        level: shopManager.upgrades.hookQualityLevel,
+        cost: shopManager.getHookUpgradeCost(),
         canBuy: shopManager.canBuyHookUpgrade(),
+        iconKey: "icon_hook",
         action: () => {
           if (shopManager.buyHookUpgrade()) {
             this.updateCoins(shopManager.coins);
             this.renderUpgradeButtonsContent(shopManager);
           }
         },
-        yOffset: -40,
+        col: 0,
+        row: 1,
       },
       {
-        label: `Haak capaciteit (Lvl ${shopManager.upgrades.hookCapacityLevel}) - €${shopManager.getCapacityUpgradeCost()}`,
+        title: "Haak capaciteit",
+        level: shopManager.upgrades.hookCapacityLevel,
+        cost: shopManager.getCapacityUpgradeCost(),
         canBuy: shopManager.canBuyCapacityUpgrade(),
+        iconKey: "icon_capacity",
         action: () => {
           if (shopManager.buyCapacityUpgrade()) {
             this.updateCoins(shopManager.coins);
             this.renderUpgradeButtonsContent(shopManager);
           }
         },
-        yOffset: 0,
+        col: 1,
+        row: 1,
       },
     ];
 
     upgradesInfo.forEach((item) => {
-      const width = 290;
-      const height = 32;
-      const bgColor = item.canBuy ? 0x2266aa : 0x444444;
+      const cardWidth = 195;
+      const cardHeight = 64;
+      const bgColor = item.canBuy ? 0x1e3a8a : 0x374151;
 
-      // Maak direct een zelfstandige container aan op absolute schermcoördinaten
-      const btnContainer = this.scene.add.container(
-        sw / 2,
-        baseY + item.yOffset,
-      );
+      const posX = startX + item.col * (cardWidth + 12) + cardWidth / 2;
+      const posY = startY + item.row * (cardHeight + 10);
+
+      // Maak de container interactief met een duidelijke hitArea
+      const btnContainer = this.scene.add.container(posX, posY);
       btnContainer.setScrollFactor(0);
       btnContainer.setDepth(250);
 
+      const hitArea = new Phaser.Geom.Rectangle(
+        -cardWidth / 2,
+        -cardHeight / 2,
+        cardWidth,
+        cardHeight,
+      );
+      btnContainer.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
+
       const bg = this.scene.add
-        .rectangle(0, 0, width, height, bgColor)
-        .setStrokeStyle(1.5, 0xffffff);
+        .rectangle(0, 0, cardWidth, cardHeight, bgColor)
+        .setStrokeStyle(2, item.canBuy ? 0x38bdf8 : 0x9ca3af);
 
-      const txt = this.scene.add
-        .text(0, 0, item.label, {
+      if (this.scene.textures.exists(item.iconKey)) {
+        const icon = this.scene.add.image(-cardWidth / 2 + 24, 0, item.iconKey);
+        icon.setDisplaySize(32, 32);
+        btnContainer.add(icon);
+      } else {
+        const fallbackCircle = this.scene.add.circle(
+          -cardWidth / 2 + 26,
+          0,
+          16,
+          0x3b82f6,
+        );
+        btnContainer.add(fallbackCircle);
+      }
+
+      const textX = -cardWidth / 2 + 50;
+
+      const titleText = this.scene.add.text(textX, -12, `${item.title}`, {
+        fontSize: "13px",
+        color: "#ffffff",
+        fontStyle: "bold",
+      });
+
+      const infoText = this.scene.add.text(
+        textX,
+        8,
+        `Lvl ${item.level} | €${item.cost}`,
+        {
           fontSize: "12px",
-          color: item.canBuy ? "#ffffff" : "#aaaaaa",
+          color: item.canBuy ? "#facc15" : "#9ca3af",
           fontStyle: "bold",
-        })
-        .setOrigin(0.5);
+        },
+      );
 
-      btnContainer.add([bg, txt]);
+      btnContainer.add([bg, titleText, infoText]);
 
       if (item.canBuy) {
-        const hitArea = new Phaser.Geom.Rectangle(
-          -width / 2,
-          -height / 2,
-          width,
-          height,
-        );
-        btnContainer.setInteractive(hitArea, Phaser.Geom.Rectangle.Contains);
-
         btnContainer.on("pointerdown", () => {
-          bg.setAlpha(0.7);
+          bg.setAlpha(0.8);
           item.action();
         });
         btnContainer.on("pointerup", () => bg.setAlpha(1));
         btnContainer.on("pointerout", () => bg.setAlpha(1));
       }
 
-      // Standaard onzichtbaar tot de haak binnen is
       btnContainer.setVisible(false);
       this.upgradeButtonContainers.push(btnContainer);
     });
