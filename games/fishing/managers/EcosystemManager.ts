@@ -424,9 +424,26 @@ export class EcosystemManager {
     ];
 
     fishTiers.forEach((tier) => {
-      for (let i = 0; i < tier.count; i++) {
-        const x = Phaser.Math.Between(200, this.worldWidth - 200);
-        const y = Phaser.Math.Between(tier.yMin, tier.yMax);
+      const spawnCount = Math.ceil(tier.count * 1.5);
+      const columns = Math.min(6, spawnCount);
+      const columnSpacing = (this.worldWidth - 400) / columns;
+      const depthSpacing = (tier.yMax - tier.yMin) / spawnCount;
+      const depthJitter = Math.floor(Math.min(35, depthSpacing * 0.35));
+
+      for (let i = 0; i < spawnCount; i++) {
+        const column = i % columns;
+        const x = Phaser.Math.Clamp(
+          200 + columnSpacing * (column + 0.5) + Phaser.Math.Between(-35, 35),
+          100,
+          this.worldWidth - 100,
+        );
+        const y = Phaser.Math.Clamp(
+          tier.yMin +
+            depthSpacing * (i + 0.5) +
+            Phaser.Math.Between(-depthJitter, depthJitter),
+          tier.yMin,
+          tier.yMax,
+        );
         const directionSpeed = Math.random() > 0.5 ? tier.speed : -tier.speed;
 
         const fish = new Fish(this.scene, x, y, {
