@@ -17,6 +17,7 @@ export default defineConfig({
         ),
         campingCross: resolve(__dirname, "games/Camping-Cross/index.html"),
         fishing: resolve(__dirname, "games/fishing/index.html"),
+        bakeryRush: resolve(__dirname, "games/Bakery-Rush/index.html"),
       },
     },
   },
