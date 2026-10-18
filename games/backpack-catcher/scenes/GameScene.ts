@@ -222,12 +222,7 @@ export class GameScene extends Phaser.Scene {
       }
     });
 
-    this.spawnTimer = this.time.addEvent({
-      delay: this.spawnDelay,
-      callback: this.spawnItem,
-      callbackScope: this,
-      loop: true,
-    });
+    this.spawnTimer = this.time.delayedCall(this.spawnDelay, this.spawnItem, [], this);
   }
 
   private createCloud(x: number, y: number): Phaser.GameObjects.Container {
@@ -316,7 +311,6 @@ export class GameScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const difficulty = Math.min(8, Math.floor(this.score / 100));
     this.spawnDelay = Math.max(450, this.baseSpawnDelay - difficulty * 90);
-    this.spawnTimer.delay = this.spawnDelay;
 
     const roll = Phaser.Math.Between(1, 100);
     const badChance = Math.min(45, 25 + difficulty * 2.5);
@@ -347,6 +341,15 @@ export class GameScene extends Phaser.Scene {
       320 + difficulty * 35,
     );
     item.setVelocityY(speed);
+
+    if (!this.isGameOver) {
+      this.spawnTimer = this.time.delayedCall(
+        this.spawnDelay,
+        this.spawnItem,
+        [],
+        this,
+      );
+    }
   }
 
   private catchItem(_backpack: unknown, item: unknown): void {
