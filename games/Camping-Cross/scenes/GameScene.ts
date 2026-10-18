@@ -118,7 +118,10 @@ export class JobTheCatScene extends Phaser.Scene {
     this.checkWaterAndLogs(delta);
 
     while (this.player.y - 500 < this.laneManager.nextLaneY) {
-      this.laneManager.generateRandomLane();
+      this.laneManager.generateRandomLane("forward");
+    }
+    while (this.player.y + 500 > this.laneManager.nextBackLaneY) {
+      this.laneManager.generateRandomLane("backward");
     }
 
     // Ruim oude objecten én lanes op die onder het scherm zijn verdwenen
@@ -194,13 +197,6 @@ export class JobTheCatScene extends Phaser.Scene {
     if (isBlockedByTree) {
       return; // Blokkeer de stap als er een boom staat
     }
-
-    const maxAllowedY = Math.min(
-      this.scale.height - 100,
-      this.highestYReached + this.gridTileSize * 2,
-    );
-
-    if (dy > 0 && targetY > maxAllowedY) return;
 
     this.player.move(dx, dy, this.scale.width);
 
