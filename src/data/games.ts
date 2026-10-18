@@ -25,4 +25,10 @@ export const GAMES: GameItem[] = [
     description: "Gooi je hengel uit en vang zeldzame vissen!",
     path: "/games/fishing/index.html",
   },
+  {
+    id: "bakery-rush",
+    title: "Bakery Rush",
+    description: "Bak de broodjes zo snel als je kan!",
+    path: "/games/Bakery-Rush/index.html",
+  },
 ];
