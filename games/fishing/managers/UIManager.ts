@@ -13,6 +13,7 @@ export class UIManager {
 
   private upgradeButtonsContainer!: Phaser.GameObjects.Container;
   private collectionModal: CollectionModal;
+  private upgradeButtonsVisible: boolean = false;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -113,9 +114,7 @@ export class UIManager {
 
     // Grid instellingen (2 kolommen x 2 rijen)
     const cardWidth = 195;
-    const cardHeight = 64;
     const spacingX = 12;
-    const spacingY = 10;
 
     // Plaats het grid net boven de pijltjesknoppen
     const startX = sw / 2 - (cardWidth + spacingX / 2);
@@ -253,16 +252,18 @@ export class UIManager {
         btnContainer.on("pointerout", () => bg.setAlpha(1));
       }
 
-      btnContainer.setVisible(false);
+      btnContainer.setVisible(this.upgradeButtonsVisible);
       this.upgradeButtonContainers.push(btnContainer);
     });
   }
 
   public setUpgradeButtonsVisible(
     visible: boolean,
-    shopManager: ShopManager,
+    _shopManager: ShopManager,
   ): void {
-    // Zet de zichtbaarheid van alle losse knoppen aan/uit
+    if (this.upgradeButtonsVisible === visible) return;
+
+    this.upgradeButtonsVisible = visible;
     this.upgradeButtonContainers.forEach((btn) => btn.setVisible(visible));
   }
 

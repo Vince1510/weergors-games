@@ -115,11 +115,6 @@ export class FishingScene extends Phaser.Scene {
       undefined,
       this,
     );
-    // Toon alle physics colliders op het scherm voor debugging
-    if (!this.physics.world.debugGraphic) {
-      this.physics.world.createDebugGraphic();
-    }
-    this.physics.world.debugGraphic.setVisible(true);
   }
 
   override update(_time: number, delta: number): void {

@@ -258,6 +258,7 @@ export class HookManager {
             // Sla direct op en update het geld op het scherm
             this.shopManager.saveToLocalStorage();
             this.uiManager.updateCoins(this.shopManager.coins);
+            this.uiManager.renderUpgradeButtonsContent(this.shopManager);
 
             this.uiManager.showStatus(
               `${this.hookedFishes.length} vissen binnengehaald! +€${totalEarned}`,
@@ -283,10 +284,6 @@ export class HookManager {
             fish.updateHooked(deltaSec);
           }
 
-          //   console.log(
-          //     `[Vis ${index}] Type: ${fish.fishType} | isStruggling: ${fish.isStruggling} | Timer: ${fish.struggleTimer}`,
-          //   );
-
           if (fish.isStruggling) {
             this.hookVx += Math.random() > 0.5 ? 120 : -120;
           }
@@ -299,25 +296,16 @@ export class HookManager {
         );
         const anyStruggling = this.hookedFishes.some((f) => f.isStruggling);
 
-        // Console log om het gewicht en de huidige spanning te monitoren
-        console.log(
-          `[Gewicht Check] Aantal vissen: ${this.hookedFishes.length} | Totaal punten (gewicht): ${totalPoints} | Huidige spanning: ${this.lineTension.toFixed(1)}`,
-        );
-
         if (inputState.up && anyStruggling) {
           const increase =
             (25 + totalPoints * 0.15) * tensionMultiplier * deltaSec;
           this.lineTension += increase;
-          console.log(
-            `[Spanning Stijgt] Lijn wordt ingehaald onder spanning. Toename: ${increase.toFixed(2)} | Nieuwe spanning: ${this.lineTension.toFixed(1)}`,
-          );
         } else if (!inputState.up) {
           this.lineTension = Math.max(0, this.lineTension - 40 * deltaSec);
         }
 
         this.uiManager.updateTension(this.lineTension);
         if (this.lineTension >= 80) {
-          console.log(`[TE VEEL GEWICHT!] Lijn te strak! Er schiet 1 vis los.`);
           this.uiManager.showStatus(
             "Te veel gewicht! Een vis is losgeschoten!",
             2000,
