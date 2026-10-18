@@ -26,6 +26,8 @@ export function GameModal({ gamePath, onClose }: GameModalProps) {
           <iframe
             src={gamePath}
             title="Game Screen"
+            allow="fullscreen; orientation-lock"
+            allowFullScreen
             style={{ width: "100%", height: "100%", border: "none" }}
           />
         )}

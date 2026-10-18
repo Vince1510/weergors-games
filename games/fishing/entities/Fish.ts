@@ -50,11 +50,6 @@ export class Fish extends Phaser.GameObjects.Container {
     if (body) {
       body.setAllowGravity(false);
     }
-
-    if (!scene.physics.world.debugGraphic) {
-      scene.physics.world.createDebugGraphic();
-    }
-    scene.physics.world.debugGraphic.setVisible(true);
   }
 
   public updateFish(screenWidth: number, deltaSec: number): void {

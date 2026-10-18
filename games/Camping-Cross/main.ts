@@ -39,10 +39,24 @@ export const launchGame = (containerId: string): Phaser.Game => {
     );
   }
 
-  return new Phaser.Game({
+  const game = new Phaser.Game({
     ...config,
     parent: containerId,
   });
+
+  game.canvas.addEventListener(
+    "pointerdown",
+    () => {
+      if ("orientation" in screen && screen.orientation.lock) {
+        void screen.orientation.lock("portrait").catch(() => {
+          // The portrait layout remains usable when browser locking is unavailable.
+        });
+      }
+    },
+    { once: true },
+  );
+
+  return game;
 };
 
 // --- AUTOMATISCHE START VOOR STANDALONE HTML ---

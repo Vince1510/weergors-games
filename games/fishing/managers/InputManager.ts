@@ -85,9 +85,7 @@ export class InputManager {
       .fillStyle(0xffffff, 0.3)
       .fillRoundedRect(-size / 2, -size / 2, size, size, 16)
       .lineStyle(2, 0xffffff, 0.7)
-      .strokeRoundedRect(-size / 2, -size / 2, size, size, 16)
-      .setScrollFactor(0)
-      .setDepth(200);
+      .strokeRoundedRect(-size / 2, -size / 2, size, size, 16);
 
     const btnText = this.scene.add
       .text(0, 0, label, {
@@ -95,9 +93,7 @@ export class InputManager {
         color: "#ffffff",
         fontStyle: "bold",
       })
-      .setOrigin(0.5)
-      .setScrollFactor(0)
-      .setDepth(201);
+      .setOrigin(0.5);
 
     const container = this.scene.add
       .container(x, y, [btnBg, btnText])
