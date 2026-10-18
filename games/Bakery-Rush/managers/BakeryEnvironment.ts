@@ -16,38 +16,60 @@ export function createBakeryEnvironment(scene: Phaser.Scene): void {
   cafe.fillRoundedRect(20, 69, 760, 154, 18);
   cafe.fillStyle(0x9dd7dd, 1);
   cafe.fillRoundedRect(32, 79, 736, 124, 12);
-  cafe.lineStyle(5, 0xf8ffff, 0.9);
-  cafe.strokeRoundedRect(32, 79, 736, 124, 12);
-  cafe.lineStyle(3, 0xf8ffff, 0.7);
-  cafe.lineBetween(400, 81, 400, 201);
-  cafe.lineBetween(34, 143, 766, 143);
-  cafe.setDepth(-6);
+  cafe.setDepth(-7);
 
-  const landscape = scene.add.graphics();
-  landscape.fillStyle(0x7fc795, 1);
-  landscape.fillEllipse(120, 178, 172, 95);
-  landscape.fillEllipse(302, 180, 124, 84);
-  landscape.fillEllipse(506, 179, 166, 96);
-  landscape.fillEllipse(692, 179, 146, 103);
-  landscape.fillStyle(0x4f9e79, 1);
-  landscape.fillEllipse(98, 187, 90, 48);
-  landscape.fillEllipse(560, 189, 104, 50);
-  landscape.fillEllipse(729, 187, 94, 50);
-  landscape.setDepth(-5);
+  const nature = scene.add.graphics();
+  nature.fillStyle(0xffe69a, 1);
+  nature.fillCircle(690, 109, 17);
+  nature.fillStyle(0xffffff, 0.75);
+  nature.fillEllipse(565, 112, 52, 15);
+  nature.fillEllipse(583, 107, 26, 18);
+  nature.fillEllipse(601, 112, 35, 13);
+  nature.fillStyle(0x8dc9a2, 1);
+  nature.fillEllipse(177, 184, 288, 36);
+  nature.fillEllipse(408, 184, 330, 42);
+  nature.fillEllipse(637, 184, 258, 36);
+  nature.fillStyle(0x4a916b, 1);
+  nature.fillRect(32, 178, 736, 25);
 
-  const decor = scene.add.graphics();
-  for (const x of [87, 272, 526, 711]) {
-    decor.fillStyle(0x477c68, 1);
-    decor.fillRoundedRect(x - 4, 98, 8, 99, 3);
-    decor.fillStyle(0x438e65, 1);
-    decor.fillCircle(x - 15, 99, 15);
-    decor.fillCircle(x + 5, 90, 19);
-    decor.fillCircle(x + 18, 107, 13);
-    decor.fillStyle(0x73b477, 1);
-    decor.fillCircle(x - 14, 94, 6);
-    decor.fillCircle(x + 6, 84, 7);
+  for (const [x, baseY, scale] of [
+    [92, 179, 0.8],
+    [206, 181, 0.64],
+    [496, 179, 0.72],
+    [719, 181, 0.9],
+  ]) {
+    nature.fillStyle(0x75543b, 1);
+    nature.fillRoundedRect(x - 4 * scale, baseY - 35 * scale, 8 * scale, 40 * scale, 3);
+    nature.fillStyle(0x347a55, 1);
+    nature.fillCircle(x, baseY - 48 * scale, 19 * scale);
+    nature.fillCircle(x - 13 * scale, baseY - 38 * scale, 14 * scale);
+    nature.fillCircle(x + 13 * scale, baseY - 38 * scale, 14 * scale);
+    nature.fillStyle(0x5a9f68, 1);
+    nature.fillCircle(x - 5 * scale, baseY - 51 * scale, 8 * scale);
   }
-  decor.setDepth(-4);
+
+  nature.lineStyle(2, 0x9bd277, 0.9);
+  for (let x = 42; x < 768; x += 17) {
+    const y = 196 - ((x * 7) % 8);
+    nature.lineBetween(x, y, x - 3, y - 7);
+    nature.lineBetween(x + 2, y, x + 5, y - 5);
+  }
+  nature.fillStyle(0xffe28a, 1);
+  for (const [x, y] of [[129, 188], [347, 195], [581, 187], [747, 194]]) {
+    nature.fillCircle(x, y, 2);
+    nature.fillCircle(x - 3, y, 1.5);
+    nature.fillCircle(x + 3, y, 1.5);
+    nature.fillCircle(x, y - 3, 1.5);
+  }
+  nature.setDepth(-5);
+
+  const windowFrame = scene.add.graphics();
+  windowFrame.lineStyle(5, 0xf8ffff, 0.9);
+  windowFrame.strokeRoundedRect(32, 79, 736, 124, 12);
+  windowFrame.lineStyle(3, 0xf8ffff, 0.7);
+  windowFrame.lineBetween(400, 81, 400, 201);
+  windowFrame.lineBetween(34, 143, 766, 143);
+  windowFrame.setDepth(-3);
 
   scene.add.rectangle(0, 274, 800, 176, 0x9e593d).setOrigin(0).setDepth(-3);
   for (let y = 292; y < 450; y += 36) {
