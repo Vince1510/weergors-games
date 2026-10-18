@@ -21,6 +21,7 @@ export class LaneManager {
   public fishes!: Phaser.Physics.Arcade.Group;
   public trees!: Phaser.Physics.Arcade.Group;
   public nextLaneY: number = 600;
+  public nextBackLaneY: number = 0;
   private gridTileSize: number;
 
   public worldWidth: number = 1500; // Vaste brede wereld (30 kolommen van 50px)
@@ -49,9 +50,10 @@ export class LaneManager {
       this.createLane(y, "grass");
     }
     this.nextLaneY = screenHeight - 250;
+    this.nextBackLaneY = screenHeight + this.gridTileSize * 3;
 
     while (this.nextLaneY > -400) {
-      this.generateRandomLane(screenHeight);
+      this.generateRandomLane("forward");
     }
   }
 
@@ -68,27 +70,26 @@ export class LaneManager {
       tile.setOrigin(0.5);
     }
 
-    // PLAATS VASTE GRENS-BOOMEN AAN DE UITEINDEN (BEHALVE BIJ WATER)
-    if (type !== "water") {
-      const leftBorderX = this.gridTileSize / 2; // Eerste vakje links
-      const rightBorderX = this.worldWidth - this.gridTileSize / 2; // Laatste vakje rechts
+    const leftBorderX = -this.gridTileSize / 2;
+    const rightBorderX = this.worldWidth + this.gridTileSize / 2;
 
-      const leftTree = new Tree(this.scene, leftBorderX, y, this.gridTileSize);
-      const rightTree = new Tree(
-        this.scene,
-        rightBorderX,
-        y,
-        this.gridTileSize,
-      );
+    const leftTree = new Tree(this.scene, leftBorderX, y, this.gridTileSize);
+    const rightTree = new Tree(
+      this.scene,
+      rightBorderX,
+      y,
+      this.gridTileSize,
+    );
 
-      this.trees.add(leftTree);
-      this.trees.add(rightTree);
-    }
+    this.trees.add(leftTree);
+    this.trees.add(rightTree);
 
     this.lanes.push({ y, type });
   }
 
-  public generateRandomLane(playerY: number = 0): void {
+  public generateRandomLane(direction: "forward" | "backward" = "forward"): void {
+    const laneY =
+      direction === "forward" ? this.nextLaneY : this.nextBackLaneY;
     const rand = Math.random();
     let laneType: "grass" | "road" | "water" = "grass";
 
@@ -98,12 +99,12 @@ export class LaneManager {
       laneType = "water";
     }
 
-    this.createLane(this.nextLaneY, laneType);
+    this.createLane(laneY, laneType);
     const laneIndex = this.lanes.length - 1;
 
     const distanceTraveled = Math.max(
       0,
-      (this.scene.scale.height - this.nextLaneY) / 50,
+      Math.abs(this.scene.scale.height - laneY) / 50,
     );
     const speedBoost = Math.min(80, distanceTraveled * 1.5);
     if (laneType === "road") {
@@ -131,20 +132,27 @@ export class LaneManager {
     } else {
       let occupiedCols = new Set<number>();
       if (Math.random() < 0.6) {
-        occupiedCols = this.spawnTreesOnGrassLane(this.nextLaneY);
+        occupiedCols = this.spawnTreesOnGrassLane(laneY);
       }
 
       if (Math.random() < 0.4) {
-        this.spawnFishOnLane(this.nextLaneY, occupiedCols);
+        this.spawnFishOnLane(laneY, occupiedCols);
       }
     }
 
-    this.nextLaneY -= this.gridTileSize;
+    if (direction === "forward") {
+      this.nextLaneY -= this.gridTileSize;
+    } else {
+      this.nextBackLaneY += this.gridTileSize;
+    }
+
+    const topBound = this.nextLaneY - 200;
+    const bottomBound = this.nextBackLaneY + 200;
     this.scene.physics.world.setBounds(
       -this.sideBuffer,
-      this.nextLaneY - 200,
+      topBound,
       this.worldWidth + this.sideBuffer * 2,
-      Math.abs(this.nextLaneY) + 1000,
+      bottomBound - topBound,
     );
   }
 
@@ -266,16 +274,7 @@ export class LaneManager {
     const cameraY = this.scene.cameras.main.scrollY;
     const destroyMargin = 400;
 
-    // 1. Ruim oude lanes en hun tegels op die ver onder de camera liggen
-    this.lanes = this.lanes.filter((lane) => {
-      if (lane.y > cameraY + 900) {
-        // Als je een referentie naar de tile-afbeeldingen bijhoudt, kun je die hier destroyen.
-        return false; // Verwijder uit de array
-      }
-      return true;
-    });
-
-    // 2. Ruim obstakels op
+    // Keep lane and tree history so the player can revisit any generated row.
     (this.obstacles.getChildren() as Obstacle[]).forEach((obstacle) => {
       if (
         obstacle &&
@@ -287,7 +286,7 @@ export class LaneManager {
       }
     });
 
-    // 3. Ruim boomstammen op
+    // Remove moving hazards when they leave the active area.
     (this.logs.getChildren() as Log[]).forEach((log) => {
       if (
         log &&
@@ -299,14 +298,9 @@ export class LaneManager {
       }
     });
 
-    // 4. Ruim visjes op
+    // Remove collectible fish after leaving the active area.
     (this.fishes.getChildren() as Fish[]).forEach((fish) => {
       if (fish && fish.y > cameraY + 900) fish.destroy();
-    });
-
-    // 5. Ruim bomen op
-    (this.trees.getChildren() as Tree[]).forEach((tree) => {
-      if (tree && tree.y > cameraY + 900) tree.destroy();
     });
   }
 
