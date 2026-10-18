@@ -9,16 +9,20 @@ export class GameScene extends Phaser.Scene {
   private scoreText!: Phaser.GameObjects.Text;
   private highScoreText!: Phaser.GameObjects.Text;
   private missesText!: Phaser.GameObjects.Text;
+  private wrongItemsText!: Phaser.GameObjects.Text;
   private spawnTimer!: Phaser.Time.TimerEvent;
 
   private clouds!: Phaser.GameObjects.Container[];
 
   private score: number = 0;
   private misses: number = 0;
-  private maxMisses: number = 5;
+  private wrongItemsCaught: number = 0;
+  private readonly maxMisses: number = 3;
+  private readonly maxWrongItems: number = 3;
   private isGameOver: boolean = false;
   private spawnDelay: number = 1200;
   private highScore: number = 0;
+  private readonly baseSpawnDelay: number = 1200;
 
   constructor() {
     super({ key: "GameScene" });
@@ -27,11 +31,12 @@ export class GameScene extends Phaser.Scene {
   public init(): void {
     this.score = 0;
     this.misses = 0;
+    this.wrongItemsCaught = 0;
     this.isGameOver = false;
-    this.spawnDelay = 1200;
+    this.spawnDelay = this.baseSpawnDelay;
 
     const savedHighScore = localStorage.getItem("backpack_catcher_highscore");
-    this.highScore = savedHighScore ? parseInt(savedHighScore, 10) : 0;
+    this.highScore = savedHighScore ? Number.parseInt(savedHighScore, 10) || 0 : 0;
   }
 
   public preload(): void {
@@ -40,22 +45,39 @@ export class GameScene extends Phaser.Scene {
 
     const graphics = this.make.graphics();
 
-    // Zaklamp
-    graphics.fillStyle(0xf1c40f, 1);
-    graphics.fillRect(0, 0, 30, 30);
-    graphics.generateTexture("item_flashlight", 30, 30);
+    graphics.fillStyle(0xb91c1c, 1);
+    graphics.fillCircle(18, 22, 14);
+    graphics.fillStyle(0x7f1d1d, 1);
+    graphics.fillRect(17, 3, 4, 9);
+    graphics.fillStyle(0x22c55e, 1);
+    graphics.fillEllipse(25, 7, 13, 7);
+    graphics.generateTexture("item_apple", 36, 40);
     graphics.clear();
 
-    // Tent
-    graphics.fillStyle(0x2ecc71, 1);
-    graphics.fillTriangle(15, 0, 0, 30, 30, 30);
-    graphics.generateTexture("item_tent", 30, 30);
+    graphics.fillStyle(0xfacc15, 1);
+    graphics.fillCircle(18, 22, 14);
+    graphics.fillStyle(0x92400e, 1);
+    graphics.fillRect(17, 3, 4, 9);
+    graphics.fillStyle(0x22c55e, 1);
+    graphics.fillEllipse(25, 7, 13, 7);
+    graphics.lineStyle(2, 0xfff7ae, 1);
+    graphics.strokeCircle(18, 22, 12);
+    graphics.generateTexture("item_golden_apple", 36, 40);
     graphics.clear();
 
-    // Marshmallow
-    graphics.fillStyle(0xecf0f1, 1);
-    graphics.fillRoundedRect(0, 0, 25, 30, 6);
-    graphics.generateTexture("item_marshmallow", 25, 30);
+    graphics.fillStyle(0xf472b6, 1);
+    graphics.fillEllipse(18, 22, 12, 19);
+    graphics.fillCircle(12, 12, 7);
+    graphics.fillCircle(24, 12, 7);
+    graphics.fillStyle(0xfbcfe8, 1);
+    graphics.fillEllipse(14, 19, 3, 6);
+    graphics.fillEllipse(22, 19, 3, 6);
+    graphics.fillStyle(0x831843, 1);
+    graphics.fillCircle(14, 12, 1.5);
+    graphics.fillCircle(22, 12, 1.5);
+    graphics.lineStyle(2, 0xbe185d, 1);
+    graphics.strokeEllipse(18, 22, 11, 18);
+    graphics.generateTexture("item_worm", 36, 40);
     graphics.destroy();
   }
 
@@ -88,33 +110,46 @@ export class GameScene extends Phaser.Scene {
       this.clouds.push(cloudContainer);
     }
 
-    // 4. Grasheuvels en bodem aan de onderkant (Cartoon Style)
-    const bgGraphics = this.make.graphics();
+    // 4. Grasheuvels en een gelaagde grasbodem
+    const bgGraphics = this.add.graphics();
 
-    // Achterste grasheuvels (donkerder groen)
-    bgGraphics.fillStyle(0x27ae60, 1);
-    bgGraphics.fillCircle(width * 0.2, height - 30, 120);
-    bgGraphics.fillCircle(width * 0.7, height - 20, 160);
+    bgGraphics.fillStyle(0x7c4a24, 1);
+    bgGraphics.fillRect(0, height - 66, width, 66);
+    bgGraphics.fillStyle(0x398b3d, 1);
+    bgGraphics.fillRect(0, height - 112, width, 54);
+    bgGraphics.fillCircle(width * 0.15, height - 106, 42);
+    bgGraphics.fillCircle(width * 0.42, height - 101, 50);
+    bgGraphics.fillCircle(width * 0.73, height - 108, 46);
+    bgGraphics.fillCircle(width * 0.94, height - 103, 38);
 
-    // Voorste graslaag (fris groen)
-    bgGraphics.fillStyle(0x2ecc71, 1);
-    bgGraphics.fillRect(0, height - 60, width, 80);
-    bgGraphics.fillCircle(width * 0.4, height - 50, 90);
-    bgGraphics.fillCircle(width * 0.9, height - 40, 110);
+    bgGraphics.fillStyle(0x59b84a, 1);
+    bgGraphics.fillRect(0, height - 112, width, 22);
+    bgGraphics.fillStyle(0x8cdb62, 1);
+    bgGraphics.fillRect(0, height - 112, width, 5);
 
-    // Vrolijke graspolletjes op de rand
-    bgGraphics.fillStyle(0x27ae60, 1);
-    for (let x = 15; x < width; x += 35) {
+    bgGraphics.fillStyle(0x2f8f46, 1);
+    for (let x = 8; x < width; x += 22) {
       bgGraphics.fillTriangle(
         x,
-        height - 60,
-        x + 8,
-        height - 80,
-        x + 16,
-        height - 60,
+        height - 108,
+        x + 5,
+        height - 121 - (x % 3) * 2,
+        x + 11,
+        height - 108,
       );
     }
-    bgGraphics.destroy();
+
+    bgGraphics.fillStyle(0xfde68a, 1);
+    for (let x = 18; x < width; x += 61) {
+      bgGraphics.fillCircle(x, height - 83, 3);
+      bgGraphics.fillCircle(x + 5, height - 87, 3);
+      bgGraphics.fillCircle(x + 10, height - 83, 3);
+      bgGraphics.fillCircle(x + 5, height - 79, 3);
+      bgGraphics.fillStyle(0xf59e0b, 1);
+      bgGraphics.fillCircle(x + 5, height - 83, 2);
+      bgGraphics.fillStyle(0xfde68a, 1);
+    }
+    this.createAppleTree(width, height);
     // ------------------------------------
 
     this.groundSensor = this.add.zone(width / 2, height + 20, width, 20);
@@ -156,12 +191,30 @@ export class GameScene extends Phaser.Scene {
       { fontSize: "18px", color: "#ffeaa7", fontStyle: "bold" },
     );
     this.missesText = this.add
-      .text(width - 20, 20, `Gemist: 0/5`, {
+      .text(width - 20, 20, `Gemist: 0/${this.maxMisses}`, {
         fontSize: "22px",
         color: "#d63031",
         fontStyle: "bold",
       })
       .setOrigin(1, 0);
+    this.wrongItemsText = this.add
+      .text(width - 20, 50, `Verkeerd: 0/${this.maxWrongItems}`, {
+        fontSize: "18px",
+        color: "#7c2d12",
+        fontStyle: "bold",
+      })
+      .setOrigin(1, 0);
+    this.add
+      .text(width / 2, 92, "VANG ALLEEN APPELS  •  WORMEN LATEN VALLEN", {
+        fontSize: "14px",
+        color: "#ffffff",
+        fontStyle: "bold",
+        backgroundColor: "#14532dcc",
+        padding: { x: 10, y: 7 },
+        stroke: "#052e16",
+        strokeThickness: 3,
+      })
+      .setOrigin(0.5);
 
     this.input.on("pointermove", (pointer: Phaser.Input.Pointer) => {
       if (!this.isGameOver) {
@@ -196,6 +249,54 @@ export class GameScene extends Phaser.Scene {
     return container;
   }
 
+  private createAppleTree(width: number, height: number): void {
+    const tree = this.add.graphics();
+    const canopyY = height * 0.32;
+    const treeCount = Math.ceil(width / 120) + 1;
+    const spacing = width / (treeCount - 1);
+
+    for (let treeIndex = 0; treeIndex < treeCount; treeIndex++) {
+      const centerX = treeIndex * spacing;
+      const treeTop = canopyY + Phaser.Math.Between(-8, 8);
+
+      tree.fillStyle(0x7c4a24, 1);
+      tree.fillRoundedRect(
+        centerX - 13,
+        treeTop + 52,
+        26,
+        height - (treeTop + 52),
+        9,
+      );
+      tree.fillRoundedRect(centerX - 42, treeTop + 78, 34, 12, 6);
+      tree.fillRoundedRect(centerX + 8, treeTop + 91, 38, 11, 5);
+
+      tree.fillStyle(0x166534, 1);
+      tree.fillCircle(centerX - 31, treeTop + 31, 34);
+      tree.fillCircle(centerX, treeTop + 8, 42);
+      tree.fillCircle(centerX + 34, treeTop + 31, 36);
+      tree.fillCircle(centerX, treeTop + 49, 38);
+
+      tree.fillStyle(0x22c55e, 0.82);
+      tree.fillCircle(centerX - 13, treeTop - 2, 21);
+      tree.fillCircle(centerX + 27, treeTop + 19, 19);
+
+      tree.fillStyle(0xef4444, 1);
+      for (const [offsetX, offsetY] of [
+        [-27, 29],
+        [-5, 3],
+        [23, 34],
+        [2, 48],
+      ]) {
+        const appleX = centerX + offsetX;
+        const appleY = treeTop + offsetY;
+        tree.fillCircle(appleX, appleY, 6);
+        tree.fillStyle(0x7c3f16, 1);
+        tree.fillRect(appleX - 1, appleY - 9, 2, 4);
+        tree.fillStyle(0xef4444, 1);
+      }
+    }
+  }
+
   public override update(): void {
     if (this.isGameOver) return;
 
@@ -212,24 +313,61 @@ export class GameScene extends Phaser.Scene {
   private spawnItem(): void {
     if (this.isGameOver) return;
 
-    const { width } = this.scale;
-    const itemKeys = ["item_flashlight", "item_tent", "item_marshmallow"];
-    const randomKey = Phaser.Utils.Array.GetRandom(itemKeys);
+    const { width, height } = this.scale;
+    const difficulty = Math.min(8, Math.floor(this.score / 100));
+    this.spawnDelay = Math.max(450, this.baseSpawnDelay - difficulty * 90);
+    this.spawnTimer.delay = this.spawnDelay;
 
-    const x = Phaser.Math.Between(40, width - 40);
+    const roll = Phaser.Math.Between(1, 100);
+    const badChance = Math.min(45, 25 + difficulty * 2.5);
+    const goldenChance = 13;
+    const kind =
+      roll <= badChance
+        ? "bad"
+        : roll <= badChance + goldenChance
+          ? "golden"
+          : "apple";
+    const texture =
+      kind === "bad"
+        ? "item_worm"
+        : kind === "golden"
+          ? "item_golden_apple"
+          : "item_apple";
+
+    const x = Phaser.Math.Between(30, width - 30);
     const item = this.items.create(
       x,
-      -30,
-      randomKey,
+      height * 0.32 + Phaser.Math.Between(-45, 45),
+      texture,
     ) as Phaser.Physics.Arcade.Sprite;
 
-    const speed = Phaser.Math.Between(180, 320);
+    item.setData("kind", kind);
+    const speed = Phaser.Math.Between(
+      180 + difficulty * 25,
+      320 + difficulty * 35,
+    );
     item.setVelocityY(speed);
   }
 
   private catchItem(_backpack: unknown, item: unknown): void {
-    (item as Phaser.GameObjects.GameObject).destroy();
-    this.score += 10;
+    const caughtItem = item as Phaser.Physics.Arcade.Sprite;
+    if (!caughtItem.active || this.isGameOver) return;
+
+    const kind = caughtItem.getData("kind") as string;
+    caughtItem.destroy();
+
+    if (kind === "bad") {
+      this.wrongItemsCaught += 1;
+      this.wrongItemsText.setText(
+        `Verkeerd: ${this.wrongItemsCaught}/${this.maxWrongItems}`,
+      );
+      if (this.wrongItemsCaught >= this.maxWrongItems) {
+        this.triggerGameOver("Je ving te vaak iets verkeerds!");
+      }
+      return;
+    }
+
+    this.score += kind === "golden" ? 50 : 10;
     this.scoreText.setText(`Score: ${this.score}`);
 
     if (this.score > this.highScore) {
@@ -243,18 +381,22 @@ export class GameScene extends Phaser.Scene {
   }
 
   private missItem(_sensor: unknown, item: unknown): void {
-    (item as Phaser.GameObjects.GameObject).destroy();
-    if (this.isGameOver) return;
+    const missedItem = item as Phaser.Physics.Arcade.Sprite;
+    if (!missedItem.active || this.isGameOver) return;
+
+    const kind = missedItem.getData("kind") as string;
+    missedItem.destroy();
+    if (kind === "bad") return;
 
     this.misses += 1;
-    this.missesText.setText(`Gemist: ${this.misses}/5`);
+    this.missesText.setText(`Gemist: ${this.misses}/${this.maxMisses}`);
 
     if (this.misses >= this.maxMisses) {
-      this.triggerGameOver();
+      this.triggerGameOver("Je miste te veel appels!");
     }
   }
 
-  private triggerGameOver(): void {
+  private triggerGameOver(reason: string): void {
     this.isGameOver = true;
     this.physics.pause();
     this.spawnTimer.remove();
@@ -275,10 +417,16 @@ export class GameScene extends Phaser.Scene {
         color: "#fff",
       })
       .setOrigin(0.5);
+    this.add
+      .text(width / 2, height / 2 + 42, reason, {
+        fontSize: "16px",
+        color: "#fca5a5",
+      })
+      .setOrigin(0.5);
 
     const restartBtn = this.add
-      .text(width / 2, height / 2 + 70, " Opnieuw Spelen ", {
-        fontSize: "22px",
+      .text(width / 2, height / 2 + 92, " Opnieuw Spelen ", {
+        fontSize: "20px",
         color: "#000",
         backgroundColor: "#2ecc71",
         padding: { x: 15, y: 10 },
