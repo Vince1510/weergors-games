@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1">
+      <stop stop-color="#8bdcf2"/>
+      <stop offset="1" stop-color="#e5f8ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="300" rx="24" fill="url(#sky)"/>
+  <g fill="#fff" opacity=".85">
+    <path d="M38 93c0-13 11-24 25-24 8-16 31-16 39 0 16-3 31 8 31 24H38Z"/>
+    <path d="M330 70c0-10 9-18 19-18 6-13 25-13 31 0 13-2 24 7 24 18h-74Z"/>
+  </g>
+  <image href="/games/Camping-Cross/assets/Job.png" x="204" y="85" width="82" height="112" preserveAspectRatio="xMidYMid meet"/>
+  <g fill="#63bd75">
+    <rect x="58" y="245" width="104" height="17" rx="8"/>
+    <rect x="310" y="208" width="104" height="17" rx="8"/>
+  </g>
+  <g fill="#fff">
+    <rect x="190" y="176" width="100" height="19" rx="10"/>
+    <circle cx="216" cy="174" r="19"/>
+    <circle cx="244" cy="169" r="23"/>
+    <circle cx="269" cy="176" r="18"/>
+  </g>
+  <g fill="#489d78">
+    <rect x="208" y="258" width="64" height="10" rx="5"/>
+  </g>
+  <text x="240" y="42" text-anchor="middle" fill="#174b65" font-family="Arial,sans-serif" font-size="26" font-weight="700">JOB SKY JUMP</text>
+</svg>

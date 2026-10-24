@@ -25,6 +25,7 @@
   "include": [
     "src",
     "src/games/backpack-catcher/src/entities/scenes",
-    "games/Bakery-Rush/**/*.ts"
+    "games/Bakery-Rush/**/*.ts",
+    "games/Job-Sky-Jump/**/*.ts"
   ]
 }
