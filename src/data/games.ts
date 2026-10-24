@@ -6,6 +6,7 @@ export interface GameItem {
   image: string;
   color: string;
   background: string;
+  orientation?: "landscape" | "portrait";
 }
 
 export const GAMES: GameItem[] = [
@@ -45,5 +46,15 @@ export const GAMES: GameItem[] = [
     image: "/games/Bakery-Rush/assets/cardimg.png",
     color: "#d28a27",
     background: "#fff4d6",
+    orientation: "landscape",
+  },
+  {
+    id: "job-sky-jump",
+    title: "Job Sky Jump",
+    description: "Spring zo hoog mogelijk via platformen, wolken en veren!",
+    path: "/games/Job-Sky-Jump/index.html",
+    image: "/games/Job-Sky-Jump/assets/cardimg.svg",
+    color: "#5b9fcb",
+    background: "#e4f5ff",
   },
 ];

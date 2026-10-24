@@ -12,13 +12,13 @@ import VolumeUpIcon from "@mui/icons-material/VolumeUp";
 import VolumeOffIcon from "@mui/icons-material/VolumeOff";
 
 import { campingTheme } from "./theme/campingTheme";
-import { GAMES } from "./data/games";
+import { GAMES, type GameItem } from "./data/games";
 import { StartScreen } from "./components/StartScreen";
 import { GameCard } from "./components/GameCard";
 import { GameModal } from "./components/GameModal";
 
 export default function App() {
-  const [activeGamePath, setActiveGamePath] = useState<string | null>(null);
+  const [activeGame, setActiveGame] = useState<GameItem | null>(null);
   const [hasStarted, setHasStarted] = useState<boolean>(false);
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
@@ -53,15 +53,26 @@ export default function App() {
     }
   };
 
-  const handleOpenGame = (path: string) => {
+  const handleOpenGame = (game: GameItem) => {
+    if (!document.fullscreenElement) {
+      void document.documentElement.requestFullscreen().catch((err: unknown) => {
+        console.warn("Fullscreen activeren is mislukt:", err);
+      });
+    }
+
     if (audioRef.current && !isMuted) {
       audioRef.current.pause();
     }
-    setActiveGamePath(path);
+    setActiveGame(game);
   };
 
   const handleCloseGame = () => {
-    setActiveGamePath(null);
+    setActiveGame(null);
+    if (document.fullscreenElement) {
+      void document.exitFullscreen().catch((err: unknown) => {
+        console.warn("Fullscreen verlaten is mislukt:", err);
+      });
+    }
     if (audioRef.current && !isMuted) {
       audioRef.current.play();
     }
@@ -225,14 +236,18 @@ export default function App() {
                 color={game.color}
                 background={game.background}
                 index={index}
-                onPlay={() => handleOpenGame(game.path)}
+                onPlay={() => handleOpenGame(game)}
               />
             </Grid>
           ))}
         </Grid>
       </Container>
 
-      <GameModal gamePath={activeGamePath} onClose={handleCloseGame} />
+      <GameModal
+        gamePath={activeGame?.path ?? null}
+        requiresLandscape={activeGame?.orientation === "landscape"}
+        onClose={handleCloseGame}
+      />
     </ThemeProvider>
   );
 }
